@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>1899.12.30 00:00:00.000.912,\\QGN-WINSRV\users\D\25.D\Desktop\Dame (Delphi)\Unit1.dfm=\\QGN-WINSRV\users\D\25.D\Documents\Embarcadero\Studio\Projekte\Unit1.dfm</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.698,=\\QGN-WINSRV\users\D\25.D\Documents\Embarcadero\Studio\Projekte\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.949,=\\QGN-WINSRV\users\D\25.D\Documents\Embarcadero\Studio\Projekte\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.912,\\QGN-WINSRV\users\D\25.D\Desktop\Dame (Delphi)\Unit1.pas=\\QGN-WINSRV\users\D\25.D\Documents\Embarcadero\Studio\Projekte\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.966,\\QGN-WINSRV\users\D\25.D\Desktop\Dame (Delphi)\Project1.dproj=\\QGN-WINSRV\users\D\25.D\Documents\Embarcadero\Studio\Projekte\Project1.dproj</Transaction>
+  </Transactions>
+</BorlandProject>
