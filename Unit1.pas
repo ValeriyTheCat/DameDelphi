@@ -14,6 +14,7 @@ type
     procedure FormCreate(Sender: TObject);
     procedure Button1Click(Sender: TObject);
     procedure ClickHandler(Sender: TObject);
+    procedure OnClickFeld(Sender: TObject);
 
   private
     { Private-Deklarationen }
@@ -25,8 +26,8 @@ var
   Form1: TForm1;
   ImH,ImR,ImG:array [1..8,1..8] of TImage;
   ImP: TImage;
-  i,j,k,x,x2: integer;
-
+  i,j,k,x,x2,SelectedX,SelectedY: integer;
+  first: Boolean;
 
 implementation
 
@@ -54,8 +55,9 @@ procedure TForm1.FormCreate(Sender: TObject);
          //Konstruktor der Komponente aufrufen ....TEdit.Create(..)
          ImH[i,j]:=TImage.Create(Self);
          ImH[i,j].Parent := Self;
+         ImH[i,j].OnClick := OnClickFeld;
          //Eigenschaften der Komponente setzen
-         //Position und GrÃ¶ÃŸe
+         //Position und Größe
          ImH[i,j].Left:=500+50*j;
          ImH[i,j].Width:=50;
          ImH[i,j].Top:=50+50*i;
@@ -66,7 +68,8 @@ procedure TForm1.FormCreate(Sender: TObject);
          ImH[i,j].AutoSize:=false;
          ImH[i,j].Canvas.Brush.Style := bssolid;
 
-         //Wann dÃ¼rfen Steine erstllt werden
+
+         //Wann dürfen Steine erstllt werden
          if x = -1 then
          if i <> 4 then
          if i <> 5 then
@@ -77,7 +80,7 @@ procedure TForm1.FormCreate(Sender: TObject);
           ImR[i,j]:=TImage.Create(Self);
           ImR[i,j].Parent := Self;
           //Eigenschaften der Komponente setzen
-          //Position und GrÃ¶ÃŸe
+          //Position und Größe
           ImR[i,j].Left:=500+50*j;
           ImR[i,j].Width:=50;
           ImR[i,j].Top:=50+50*i;
@@ -113,7 +116,7 @@ procedure TForm1.FormCreate(Sender: TObject);
           ImG[i,j]:=TImage.Create(Self);
           ImG[i,j].Parent := Self;
           //Eigenschaften der Komponente setzen
-          //Position und GrÃ¶ÃŸe
+          //Position und Größe
           ImG[i,j].Left:=500+50*j;
           ImG[i,j].Width:=50;
           ImG[i,j].Top:=50+50*i;
@@ -166,8 +169,8 @@ procedure TForm1.FormCreate(Sender: TObject);
 
 
 
-   //highlight zum feld auswÃ¤hlen erstellen
-   //Erstes Setup, wie Feld GrÃ¶ÃŸe
+   //highlight zum feld auswählen erstellen
+   //Erstes Setup, wie Feld Größe
   ImP:= TImage.Create(Self);
   ImP.Parent := Self;
   ImP.AutoSize := False;
@@ -180,7 +183,7 @@ procedure TForm1.FormCreate(Sender: TObject);
   //Bitmap Setup
   ImP.Picture.Bitmap := TBitmap.Create;                 //Bitmap erstellen
   ImP.Picture.Bitmap.PixelFormat := pf32bit;            //Format 32 damit man trasnsparente pixel nutzen kann (gefunde auf stackoverflow)
-  ImP.Picture.Bitmap.SetSize(ImP.Width, ImP.Height);    //Bitmap grÃ¶ÃŸe gleich der Image grÃ¶ÃŸe
+  ImP.Picture.Bitmap.SetSize(ImP.Width, ImP.Height);    //Bitmap größe gleich der Image größe
 
 
   ImP.Picture.Bitmap.Canvas.FillRect(Rect(0,0,ImP.Width,ImP.Height)); //Rechteck
@@ -190,8 +193,8 @@ procedure TForm1.FormCreate(Sender: TObject);
   begin
     Pen.Color := clBlue; //Farbe
     Pen.Width := 2; //Wie breit die umrandung ist
-    Brush.Style := bsClear; //Nur umrandung, bei bssolid wÃ¤re das ganze feld Ã¼berdeckt
-    Rectangle(1, 1, ImP.Width - 1, ImP.Height - 1); //ImP.Width/Height-1 sorgt dafÃ¼r das die ecke des rechecks auf dem letzten mÃ¶glichem pixel ist. in den klammern sind koordinaten wie auch sonst immer.
+    Brush.Style := bsClear; //Nur umrandung, bei bssolid wäre das ganze feld überdeckt
+    Rectangle(1, 1, ImP.Width - 1, ImP.Height - 1); //ImP.Width/Height-1 sorgt dafür das die ecke des rechecks auf dem letzten möglichem pixel ist. in den klammern sind koordinaten wie auch sonst immer.
   end;
    ImP.BringToFront;
   end;
@@ -202,9 +205,26 @@ procedure TForm1.FormCreate(Sender: TObject);
 
 
 
- //Hier Code fÃ¼r bewegen und rest halt.
+ //Hier Code für bewegen
  procedure TForm1.ClickHandler(Sender: TObject);
  begin
-   showmessage('TEST');
+  //showmessage(IntToStr(TImage(Sender).Top) + '/n' + IntToStr(TImage(Sender).Left));
+  TImage(Sender).Left := SelectedX; // Setzt die Variable auf den X wert vom Angeckickten feld
+  TImage(Sender).Top := SelectedY;  // Setzt die Variable auf den Y wert vom Angeckickten feld
+
+ end;
+
+
+ procedure TForm1.OnClickFeld(Sender: TObject);
+ begin
+ // "Bewegt" die Steine
+ // Funktioniert net
+ //           |
+ //           |
+ //           |
+ //          \/
+ //
+   SelectedY := TImage(Sender).Top;
+   SelectedX := TImage(Sender).Left;
  end;
 end.
