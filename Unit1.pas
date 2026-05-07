@@ -14,8 +14,6 @@ type
     procedure FormCreate(Sender: TObject);
     procedure Button1Click(Sender: TObject);
     procedure ClickHandler(Sender: TObject);
-    procedure OnClickFeld(Sender: TObject);
-
   private
     { Private-Deklarationen }
   public
@@ -55,7 +53,8 @@ procedure TForm1.FormCreate(Sender: TObject);
          //Konstruktor der Komponente aufrufen ....TEdit.Create(..)
          ImH[i,j]:=TImage.Create(Self);
          ImH[i,j].Parent := Self;
-         ImH[i,j].OnClick := OnClickFeld;
+         ImH[i,j].OnClick := ClickHandler;
+         ImH[i,j].Name := 'Feld' + IntToStr(i) + IntToStr(j); // jedes feld bekommt einen Namen mit 'Feld' plus ihre Koordinate
          //Eigenschaften der Komponente setzen
          //Position und Größe
          ImH[i,j].Left:=500+50*j;
@@ -189,6 +188,7 @@ procedure TForm1.FormCreate(Sender: TObject);
   ImP.Picture.Bitmap.Canvas.FillRect(Rect(0,0,ImP.Width,ImP.Height)); //Rechteck
   ImP.Picture.Bitmap.Transparent := True;  //Damit man das feld halt noch sieht
 
+  // Pointer
   with ImP.Picture.Bitmap.Canvas do
   begin
     Pen.Color := clBlue; //Farbe
@@ -208,23 +208,20 @@ procedure TForm1.FormCreate(Sender: TObject);
  //Hier Code für bewegen
  procedure TForm1.ClickHandler(Sender: TObject);
  begin
-  //showmessage(IntToStr(TImage(Sender).Top) + '/n' + IntToStr(TImage(Sender).Left));
-  TImage(Sender).Left := SelectedX; // Setzt die Variable auf den X wert vom Angeckickten feld
-  TImage(Sender).Top := SelectedY;  // Setzt die Variable auf den Y wert vom Angeckickten feld
+  if TImage(Sender).Name = '' then  // da die Steine keine Namen haben, wird hier überpüft ob das angeclickte Object ein Name hat
+    begin
+      TImage(Sender).Top := SelectedX;  //wenn ja, dann wissen wir, dass ein Stein angeclickt wurde
+      TImage(Sender).Left := SelectedY;
+    end
+  else
+    begin
+      SelectedY := TImage(Sender).Top;   //wenn nein, dann wurde ein Feld angecickt
+      SelectedX := TImage(Sender).Left;
+      showmessage(IntToStr(SelectedX) + IntToStr(SelectedY));
+    end;
+
+
 
  end;
 
-
- procedure TForm1.OnClickFeld(Sender: TObject);
- begin
- // "Bewegt" die Steine
- // Funktioniert net
- //           |
- //           |
- //           |
- //          \/
- //
-   SelectedY := TImage(Sender).Top;
-   SelectedX := TImage(Sender).Left;
- end;
 end.
