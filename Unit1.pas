@@ -13,7 +13,6 @@ type
     Button1: TButton;
     procedure FormCreate(Sender: TObject);
     procedure Button1Click(Sender: TObject);
-    procedure ClickHandler(Sender: TObject);
   private
     { Private-Deklarationen }
   public
@@ -22,24 +21,23 @@ type
 
 var
   Form1: TForm1;
-  ImH,ImR,ImG:array [1..8,1..8] of TImage;
+  ImH,ImS:array [1..8,1..8] of TImage;
   ImP: TImage;
-  i,j,k,x,x2,SelectedX,SelectedY: integer;
-  first: Boolean;
+  i,j,x,x2: integer;
+
 
 implementation
 
 {$R *.dfm}
 
 
+
+
+
+
 procedure TForm1.Button1Click(Sender: TObject);
 begin
- {i := 6;
- j := 1;
- ImR[i,j].Visible:=false;
- i := 5;
- j := 2;
- ImR[i,j].Visible:=true;}
+ ImP.Left := ImP.Left + 50;
 end;
 
 procedure TForm1.FormCreate(Sender: TObject);
@@ -53,10 +51,8 @@ procedure TForm1.FormCreate(Sender: TObject);
          //Konstruktor der Komponente aufrufen ....TEdit.Create(..)
          ImH[i,j]:=TImage.Create(Self);
          ImH[i,j].Parent := Self;
-         ImH[i,j].OnClick := ClickHandler;
-         ImH[i,j].Name := 'Feld' + IntToStr(i) + IntToStr(j); // jedes feld bekommt einen Namen mit 'Feld' plus ihre Koordinate
          //Eigenschaften der Komponente setzen
-         //Position und GrÃ¶ÃŸe
+         //Position und Größe
          ImH[i,j].Left:=500+50*j;
          ImH[i,j].Width:=50;
          ImH[i,j].Top:=50+50*i;
@@ -68,80 +64,43 @@ procedure TForm1.FormCreate(Sender: TObject);
          ImH[i,j].Canvas.Brush.Style := bssolid;
 
 
-         //Wann dÃ¼rfen Steine erstllt werden
+         //Spielsteine Eigenschaften
+         //Wann dürfen Steine erstllt werden
          if x = -1 then
          if i <> 4 then
          if i <> 5 then
          begin
-          //Spielsteine Rot Eigenschaften
-
-          //Konstruktor der Komponente aufrufen ....TImage.Create, nicht TEdit.Create(..)
-          ImR[i,j]:=TImage.Create(Self);
-          ImR[i,j].Parent := Self;
-          //Eigenschaften der Komponente setzen
-          //Position und GrÃ¶ÃŸe
-          ImR[i,j].Left:=500+50*j;
-          ImR[i,j].Width:=50;
-          ImR[i,j].Top:=50+50*i;
-          ImR[i,j].Height:=50;
-          //Sichtbarkeit, ...
-          ImR[i,j].Visible:=false;
-          ImR[i,j].Enabled:=true;
-          ImR[i,j].AutoSize:=false;
-          //Farbe Spielstein-Hintergrund
-          ImR[i,j].Canvas.Brush.Style := bssolid;
-          ImR[i,j].Canvas.Brush.Color := clMaroon;
-          //Erstellen Spielstein-Hintergrund
-          ImR[i,j].Transparent := true;
-          ImR[i,j].Canvas.Rectangle(1,1,50,50);
-          ImR[i,j].BringToFront;
-          //Farbe Spielstein
-          ImR[i,j].Canvas.Brush.Style := bssolid;
-           ImR[i,j].Canvas.Brush.Color := clRed;
-           if i >= 6 then
-           begin
-            ImR[i,j].Visible:=true;
-           end;
-          //Erstellen Spielsteine
-          ImR[i,j].Transparent := true;
-          ImR[i,j].Canvas.Ellipse(5,5,46,46);
-          ImR[i,j].BringToFront;
-          ImR[i,j].OnClick := ClickHandler;
-
-
-          //Spielsteine Gelb Eigenschaften
-
-          //Konstruktor der Komponente aufrufen ....TImage.Create, nicht TEdit.Create(..)
-          ImG[i,j]:=TImage.Create(Self);
-          ImG[i,j].Parent := Self;
-          //Eigenschaften der Komponente setzen
-          //Position und GrÃ¶ÃŸe
-          ImG[i,j].Left:=500+50*j;
-          ImG[i,j].Width:=50;
-          ImG[i,j].Top:=50+50*i;
-          ImG[i,j].Height:=50;
-          //Sichtbarkeit, ...
-          ImG[i,j].Visible:=false;
-          ImG[i,j].Enabled:=true;
-          ImG[i,j].AutoSize:=false;
-          //Farbe Spielstein-Hintergrund
-          ImG[i,j].Canvas.Brush.Style := bssolid;
-          ImG[i,j].Canvas.Brush.Color := clMaroon;
-          //Erstellen Spielstein-Hintergrund
-          ImG[i,j].Transparent := true;
-          ImG[i,j].Canvas.Rectangle(1,1,50,50);
-          ImG[i,j].BringToFront;
-          //farbe Spielstein
-          ImG[i,j].Canvas.Brush.Style := bssolid;
-           ImG[i,j].Canvas.Brush.Color := clYellow;
-           if i <= 3 then
-           begin
-            ImG[i,j].Visible:=true;
-           end;
-          //Erstellen Spielsteine
-          ImG[i,j].Transparent := true;
-          ImG[i,j].Canvas.Ellipse(5,5,46,46);
-          ImG[i,j].BringToFront;
+         //Konstruktor der Komponente aufrufen ....TImage.Create, nicht TEdit.Create(..)
+         ImS[i,j]:=TImage.Create(Self);
+         ImS[i,j].Parent := Self;
+         //Eigenschaften der Komponente setzen
+         //Position und Größe
+         ImS[i,j].Left:=500+50*j;
+         ImS[i,j].Width:=50;
+         ImS[i,j].Top:=50+50*i;
+         ImS[i,j].Height:=50;
+         //Sichtbarkeit, ...
+         ImS[i,j].Visible:=true;
+         ImS[i,j].Enabled:=true;
+         ImS[i,j].AutoSize:=false;
+         //Farbe Spielstein-Hintergrund
+         ImS[i,j].Canvas.Brush.Style := bssolid;
+         ImS[i,j].Canvas.Brush.Color := clMaroon;
+         //Erstellen Spielstein-Hintergrund
+         ImS[i,j].Transparent := true;
+         ImS[i,j].Canvas.Rectangle(1,1,50,50);
+         ImS[i,j].BringToFront;
+         //Farbe Spielstein
+         ImS[i,j].Canvas.Brush.Style := bssolid;
+          ImS[i,j].Canvas.Brush.Color := clYellow;
+          if i >= 6 then
+          begin
+          ImS[i,j].Canvas.Brush.Color := clRed;
+          end;
+         //Erstellen Spielsteine
+         ImS[i,j].Transparent := true;
+         ImS[i,j].Canvas.Ellipse(5,5,46,46);
+         ImS[i,j].BringToFront;
          end;
 
          //Restliche Eigenschaften Spielfeld
@@ -168,9 +127,9 @@ procedure TForm1.FormCreate(Sender: TObject);
 
 
 
-   //highlight zum feld auswÃ¤hlen erstellen
-   //Erstes Setup, wie Feld GrÃ¶ÃŸe
-  ImP:= TImage.Create(Self);
+   //highlight zum feld auswählen erstellen
+   //Erstes Setup, wie Feld Größe
+  ImP := TImage.Create(Self);
   ImP.Parent := Self;
   ImP.AutoSize := False;
   ImP.Width := 51;
@@ -182,19 +141,18 @@ procedure TForm1.FormCreate(Sender: TObject);
   //Bitmap Setup
   ImP.Picture.Bitmap := TBitmap.Create;                 //Bitmap erstellen
   ImP.Picture.Bitmap.PixelFormat := pf32bit;            //Format 32 damit man trasnsparente pixel nutzen kann (gefunde auf stackoverflow)
-  ImP.Picture.Bitmap.SetSize(ImP.Width, ImP.Height);    //Bitmap grÃ¶ÃŸe gleich der Image grÃ¶ÃŸe
+  ImP.Picture.Bitmap.SetSize(ImP.Width, ImP.Height);    //Bitmap größe gleich der Image größe
 
 
   ImP.Picture.Bitmap.Canvas.FillRect(Rect(0,0,ImP.Width,ImP.Height)); //Rechteck
   ImP.Picture.Bitmap.Transparent := True;  //Damit man das feld halt noch sieht
 
-  // Pointer
   with ImP.Picture.Bitmap.Canvas do
   begin
     Pen.Color := clBlue; //Farbe
     Pen.Width := 2; //Wie breit die umrandung ist
-    Brush.Style := bsClear; //Nur umrandung, bei bssolid wÃ¤re das ganze feld Ã¼berdeckt
-    Rectangle(1, 1, ImP.Width - 1, ImP.Height - 1); //ImP.Width/Height-1 sorgt dafÃ¼r das die ecke des rechecks auf dem letzten mÃ¶glichem pixel ist. in den klammern sind koordinaten wie auch sonst immer.
+    Brush.Style := bsClear; //Nur umrandung, bei bssolid wäre das ganze feld überdeckt
+    Rectangle(1, 1, ImP.Width - 1, ImP.Height - 1); //ImP.Width/Height-1 sorgt dafür das die ecke des rechecks auf dem letzten möglichem pixel ist. in den klammern sind koordinaten wie auch sonst immer.
   end;
    ImP.BringToFront;
   end;
@@ -204,24 +162,7 @@ procedure TForm1.FormCreate(Sender: TObject);
 
 
 
-// I tied so hard and got so far, but in the end it didnt even work >:(
- //Hier Code fÃ¼r bewegen
- procedure TForm1.ClickHandler(Sender: TObject);
- begin
-  if TImage(Sender).Name = '' then  // da die Steine keine Namen haben, wird hier Ã¼berpÃ¼ft ob das angeclickte Object ein Name hat
-    begin
-      TImage(Sender).Top := SelectedX;  //wenn ja, dann wissen wir, dass ein Stein angeclickt wurde
-      TImage(Sender).Left := SelectedY;
-    end
-  else
-    begin
-      SelectedY := TImage(Sender).Top;   //wenn nein, dann wurde ein Feld angecickt
-      SelectedX := TImage(Sender).Left;
-      showmessage(IntToStr(SelectedX) + IntToStr(SelectedY));
-    end;
 
-
-
- end;
+ //Hier Code für bewegen und rest halt.
 
 end.
