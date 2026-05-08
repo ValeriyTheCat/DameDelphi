@@ -295,12 +295,12 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
 
 end.  //Ende. (-:
 ```
-[!IMPORTANT]
-Folgende Sachen kommen noch :
-1. Überprüfung ob der Zug legal ist.
-2. Schlagen.
-3. Zurücksetzen de Spielbrettes.
-4. Tastaturabfrage?
-5. Deko
-6. ggf. Schaltert zum Auswählen des Spielmodus.
-7. ...
+>[!IMPORTANT]
+>Folgende Sachen kommen noch :
+>1. Überprüfung ob der Zug legal ist.
+>2. Schlagen.
+>3. Zurücksetzen de Spielbrettes.
+>4. Tastaturabfrage?
+>5. Deko
+>6. ggf. Schaltert zum Auswählen des Spielmodus.
+>7. ...
