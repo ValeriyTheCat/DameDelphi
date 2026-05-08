@@ -1,20 +1,20 @@
 # DameDelphi
-Das Spiel "Dame" von Jonas Klein und Valerii Zayko
+Das Spiel "Dame" von Jonas Klein und Valerii Zayko.
+
 
 ## Benutzeranweisungen
 
 <img width="417" height="417" alt="image" src="https://github.com/user-attachments/assets/f98b355b-da7f-421c-aa60-355d97541248" />
 
-Das hier ist das Spielfeld. Die rote Steine fangen an. Durch da Anclicken des Steins wird der ausgewählt (man erkennt das an den Blauen Rahmen) und durch das Ancklicken eines Feldes wird der Stein da hingezogen.
+Das hier ist das Spielfeld. Die rote Steine fangen an. Durch das Anklicken des Steins wird der ausgewählt (man erkennt das an dem blauen Rahmen) und durch das Ankilcken eines Feldes wird der Stein da hingezogen.
 
 <img width="418" height="418" alt="Recording 2026-05-08 at 20 27 48" src="https://github.com/user-attachments/assets/7288d794-bd27-4f54-9156-a5abd3d05a8c" />
 
-So sieht das aus.Danach sind die Gelbe Steine dran.
-
+So sieht das aus. Danach sind die Gelbe Steine dran.
 
 <img width="426" height="422" alt="Recording 2026-05-08 at 20 35 42" src="https://github.com/user-attachments/assets/afba2657-8eeb-4cf0-b235-5403e6401ed9" />
 
-Wenn man versucht ein ilegaler Zug zu machen, bekommt man eine Warnung.
+Wenn man versucht ein illegaler Zug zu machen, bekommt man eine Warnung.
 
 <img width="434" height="426" alt="Recording 2026-05-08 at 20 44 03" src="https://github.com/user-attachments/assets/35d37012-ce3c-4a5e-a168-adfd185d1203" />
 
@@ -26,21 +26,21 @@ ImH(ImageHintergrund) ist das Spielfeld.
 
 ImSR(ImageSpielsteinRot) und ImSG(ImageSpielsteinGelb) sind die Spielsteine.
 
-ImSN(ImageSpielsteinNichts) wird als klickbare Oberfläche zum ziehen von Spielsteinen verwendet.
+ImSN(ImageSpielsteinNichts) wird als klickbare Oberfläche zum Ziehen von Spielsteinen verwendet.
 
-ImP(ImagePointer) ist das blaue Rechteck, was wir als Umrandung benutzen.
+ImP(ImagePointer)  und ImP2(ImagePointer2) ist das blaue bzw. grüne Rechteck, was wir als Umrandung benutzen.
 
-i,jk und l werden als flexible Variablen für Schleifen, oder als kurzzeitiger Speicher genutzt.
+i, jk und l werden als flexible Variablen für Schleifen, oder als kurzzeitiger Speicher genutzt.
 
- MPosX(MausPositionX) und MPosY(MausPositionY) werden zum zwischenspeichern der Mausposition auf der X und Y Achse genutzt (X=.Left,Y=.Top).
+MPosX(MausPositionX) und MPosY(MausPositionY) werden zum zwischenspeichern der Mausposition auf der X und Y Achse genutzt (X=.Left,Y=.Top).
 
-  Die Variablen PosXStart(PositionXStart), PosYStart(PositionYStart), PosXZiel(PositionXZiel) und PosYZiel(PositionYZiel) werden beim bewegen der Steine als Speicher genutzt, sie bestimmen welcher Stein (PosXStart und PosYStart) wohin (PosXZiel,PosYZiel) gezogen werden soll.
+Die Variablen PosXStart(PositionXStart), PosYStart(PositionYStart), PosXZiel(PositionXZiel) und PosYZiel(PositionYZiel) werden beim bewegen der Steine als Speicher genutzt, sie bestimmen welcher Stein (PosXStart und PosYStart) wohin (PosXZiel,PosYZiel) gezogen werden soll.
 
- WaZ(WerAmZug) hat nur die zwei Zustände 1 und -1, und wird als Zwischensspeicher im Auswahl-Prozess verwendet.
+WaZ(WerAmZug) hat nur die zwei Zustände 1 und -1, und wird als Zwischensspeicher im Auswahl-Prozess verwendet.
 
-  AZA(AuswahlZugAuswahl) bestimmt den Zeitpunkt des Zugprozesses, beim ersten Klick ist AZA = 1, beim zweiten ist AZA = -1.
+AZA(AuswahlZugAuswahl) bestimmt den Zeitpunkt des Zugprozesses, beim ersten Klick ist AZA = 1, beim zweiten ist AZA = -1.
 
-  MPos(MausPosition) wird genutzt um die Mausposition zwischen zu speichern.
+MPos(MausPosition) wird genutzt um die Mausposition zwischen zu speichern.
 
 ### Code
 
@@ -99,7 +99,7 @@ ImSR[i,j].OnClick:=ClickHandlerRot;  //Auswahlprozess, siehe Zeile X.
 
 Jetzt kommen zur der Logik für die Bewegung.
 
-Erst erstellen wir die beiden Pointer einen grünen und einen blauen (weil der code dafür gleich ist, erwähne ich es nur ein Mal)
+Erst erstellen wir die beiden Pointers einen grünen und einen blauen (weil der code dafür gleich ist, erwähne ich es nur ein Mal)
 
 ```pascal
 //Highlights zum feld auswählen erstellen
