@@ -30,7 +30,7 @@ ImSN(ImageSpielsteinNichts) wird als klickbare Oberfläche zum Ziehen von Spiels
 
 ImP(ImagePointer)  und ImP2(ImagePointer2) ist das blaue bzw. grüne Rechteck, was wir als Umrandung benutzen.
 
-i, jk und l werden als flexible Variablen für Schleifen, oder als kurzzeitiger Speicher genutzt.
+i, j, k und l werden als flexible Variablen für Schleifen, oder als kurzzeitiger Speicher genutzt.
 
 MPosX(MausPositionX) und MPosY(MausPositionY) werden zum zwischenspeichern der Mausposition auf der X und Y Achse genutzt (X=.Left,Y=.Top).
 
@@ -97,9 +97,9 @@ ImSR[i,j].OnClick:=ClickHandlerRot;  //Auswahlprozess, siehe Zeile X.
 ```
 #### Bewegung
 
-Jetzt kommen zur der Logik für die Bewegung.
+Jetzt kommen wir zur der Logik für die Bewegung.
 
-Erst erstellen wir die beiden Pointers einen grünen und einen blauen (weil der code dafür gleich ist, erwähne ich es nur ein Mal)
+Erst erstellen wir die beiden Pointer, einen grünen und einen blauen (weil der code dafür gleich ist, erwähne ich es nur ein Mal)
 
 ```pascal
 //Highlights zum feld auswählen erstellen
@@ -128,7 +128,7 @@ ImP.BringToFront;  //Sorgt dafür, dass man die Umrandung auch sehen kann (bring
 
 
 ```
-Nach der erstellund des Pointers, kommt die Logik für den.
+Nach der Erstellung des Pointers, kommt die Logik seine Logik.
 
 ```pascal
 procedure TForm1.Feldauswahl1(Sender: TObject);  //Ändert Zustand der Variablen PosXStart und PosYStart je nach Situation.
@@ -181,7 +181,7 @@ end;
 
 
 ```
-Nach den Beiden Pointers kommt der Code für die Bewegung der Steine ( Code für Gelb und Blau ist gleich).
+Nach der Logik der Beiden Pointer kommt der Code nun für die Bewegung der Steine ( Code für Gelb und Rot ist gleich).
 
 ```pascal
 procedure TForm1.ClickHandlerRot(Sender: TObject);  //Genutzt in Zeile X
@@ -211,7 +211,7 @@ end;
 
 ```
 
-Nach dem man ein Stein ausgewählt hat, wählt man ein leeres Feld. Die Bewegung selbst ist implementiert da durch, dass wir das ausgewählte Stein unsichtbar machen und auf den gewählten Feld den Stein sichtbar machen.
+Nach dem man ein Stein ausgewählt hat, wählt man ein leeres Feld. Die Bewegung selbst ist implementiert da durch, dass wir den ausgewählten Stein unsichtbar, und auf den gewählten Feld den Stein sichtbar machen und den Stein auf dem gewählten Feld sichtbar machen.
 
 ```pascal
 procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt eines Zuges ausgeführt, d.h. wenn man ein leeres Feld anklickt, nachdem man einen Stein ausgewählt hat.
@@ -295,3 +295,12 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
 
 end.  //Ende. (-:
 ```
+[!IMPORTANT]
+Folgende Sachen kommen noch :
+1. Überprüfung ob der Zug legal ist.
+2. Schlagen.
+3. Zurücksetzen de Spielbrettes.
+4. Tastaturabfrage?
+5. Deko
+6. ggf. Schaltert zum Auswählen des Spielmodus.
+7. ...
