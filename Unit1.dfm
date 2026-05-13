@@ -38,13 +38,12 @@ object Form1: TForm1
     Font.Style = []
     ParentFont = False
   end
-  object Button1: TButton
+  object ButtonDebug: TButton
     Left = 120
     Top = 480
     Width = 75
     Height = 25
-    Caption = 'Button1'
+    Caption = 'ButtonDebug'
     TabOrder = 0
-    OnClick = Button1Click
   end
 end
