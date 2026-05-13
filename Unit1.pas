@@ -1,4 +1,4 @@
-unit Unit1;
+﻿unit Unit1;
 
 interface
 
@@ -17,7 +17,6 @@ type
     {}{}procedure ClickHandlerGelb(Sender: TObject);  //Zeile X-X; Zug von Spieler Gelb
     {}{}procedure Feldauswahl1(Sender: TObject);  //Zeile X-X; Ändert Zustand der Variablen PosXStart und PosYStart je nach Situation.
     {}{}procedure ClickHandlerElse(Sender: TObject);  //Zeile X-X; Ausführen eines Zuges (Experimentell)
-
 private
  {Private-Deklarationen}
 public
@@ -376,49 +375,60 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
        end;
      end;
    end;
+ if (PosYStart = PosYZiel) or (PosXStart = PosXZiel) then
+    begin
+     showmessage('Illegaler Zug');
+     AZA:=1;  //Fehlervorbeugung.
+     ImP.Left:=-100;  //Da der Zug abgebrochen wurde, werden die Pointer "entfernt".
+     ImP2.Left:=-100;
+    end
+  else
+    begin
+    if WaZ = 1 then  //Wenn Rot zieht.
+     begin
+      //Alten Stein unsichtbar machen. Oberfläche vorbereiten, falls in der Zukunft ein anderer Stein auf das selbe Feld gezogen wird.
 
-  if WaZ = 1 then  //Wenn Rot zieht.
-   begin
-    //Alten Stein unsichtbar machen. Oberfläche vorbereiten, falls in der Zukunft ein anderer Stein auf das selbe Feld gezogen wird.
-    ImSR[PosYStart,PosXStart].Visible:=false;
-    ImSR[PosYStart,PosXStart].Enabled:=false;
-    ImSR[PosYStart,PosXStart].SendToBack;
-    ImSN[PosYStart,PosXStart].Visible:=true;
-    ImSN[PosYStart,PosXStart].Enabled:=true;
-    ImSN[PosYStart,PosXStart].BringToFront;
+      ImSR[PosYStart,PosXStart].Visible:=false;
+      ImSR[PosYStart,PosXStart].Enabled:=false;
+      ImSR[PosYStart,PosXStart].SendToBack;
+      ImSN[PosYStart,PosXStart].Visible:=true;
+      ImSN[PosYStart,PosXStart].Enabled:=true;
+      ImSN[PosYStart,PosXStart].BringToFront;
 
-    //Neuen Stein schtbar machen.
-    ImSR[PosYZiel,PosXZiel].Visible:=true;
-    ImSR[PosYZiel,PosXZiel].Enabled:=true;
-    ImSR[PosYZiel,PosXZiel].BringToFront;
-    ImSN[PosYZiel,PosXZiel].Visible:=false;
-    ImSN[PosYZiel,PosXZiel].Enabled:=false;
-    ImSN[PosYZiel,PosXZiel].SendToBack;
-   end
+      //Neuen Stein schtbar machen.
+      ImSR[PosYZiel,PosXZiel].Visible:=true;
+      ImSR[PosYZiel,PosXZiel].Enabled:=true;
+      ImSR[PosYZiel,PosXZiel].BringToFront;
+      ImSN[PosYZiel,PosXZiel].Visible:=false;
+      ImSN[PosYZiel,PosXZiel].Enabled:=false;
+      ImSN[PosYZiel,PosXZiel].SendToBack;
+     end
 
-  else  //Wenn Gelb zieht. Gleich wie oben.
-   begin
-    ImSG[PosYStart,PosXStart].Visible:=false;
-    ImSG[PosYStart,PosXStart].Enabled:=false;
-    ImSG[PosYStart,PosXStart].SendToBack;
-    ImSN[PosYStart,PosXStart].Visible:=true;
-    ImSN[PosYStart,PosXStart].Enabled:=true;
-    ImSN[PosYStart,PosXStart].BringToFront;
+    else  //Wenn Gelb zieht. Gleich wie oben.
+     begin
 
-    ImSG[PosYZiel,PosXZiel].Visible:=true;
-    ImSG[PosYZiel,PosXZiel].Enabled:=true;
-    ImSG[PosYZiel,PosXZiel].BringToFront;
-    ImSN[PosYZiel,PosXZiel].Visible:=false;
-    ImSN[PosYZiel,PosXZiel].Enabled:=false;
-    ImSN[PosYZiel,PosXZiel].SendToBack;
+      ImSG[PosYStart,PosXStart].Visible:=false;
+      ImSG[PosYStart,PosXStart].Enabled:=false;
+      ImSG[PosYStart,PosXStart].SendToBack;
+      ImSN[PosYStart,PosXStart].Visible:=true;
+      ImSN[PosYStart,PosXStart].Enabled:=true;
+      ImSN[PosYStart,PosXStart].BringToFront;
+
+      ImSG[PosYZiel,PosXZiel].Visible:=true;
+      ImSG[PosYZiel,PosXZiel].Enabled:=true;
+      ImSG[PosYZiel,PosXZiel].BringToFront;
+      ImSN[PosYZiel,PosXZiel].Visible:=false;
+      ImSN[PosYZiel,PosXZiel].Enabled:=false;
+      ImSN[PosYZiel,PosXZiel].SendToBack;
+     end;
+       //Korrektur Sichtbarkeit der Umrandungen.
+    ImP.BringToFront;
+    ImP2.BringToFront;
+
+    WaZ:=WaZ*-1;  //Wer auch immer dran war, jetzt ist der andere dran. Wer dran ist wird über die Variable "WaZ"(WerAmZug) bestimmt. Deswegen wird sie hier umgekehrt.
+    AZA:=1;  //Korrektur Zustandsvariable.
    end;
+end;
 
-  //Korrektur Sichtbarkeit der Umrandungen.
-  ImP.BringToFront;
-  ImP2.BringToFront;
-
-  WaZ:=WaZ*-1;  //Wer auch immer dran war, jetzt ist der andere dran. Wer dran ist wird über die Variable "WaZ"(WerAmZug) bestimmt. Deswegen wird sie hier umgekehrt.
-  AZA:=1;  //Korrektur Zustandsvariable.
- end;
 
 end.  //Ende. (-:
