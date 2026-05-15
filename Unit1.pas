@@ -17,7 +17,8 @@ type
     {}{}procedure ClickHandlerGelb(Sender: TObject);  //Zeile X-X; Zug von Spieler Gelb
     {}{}procedure Feldauswahl1(Sender: TObject);  //Zeile X-X; Ändert Zustand der Variablen PosXStart und PosYStart je nach Situation.
     {}{}procedure ClickHandlerElse(Sender: TObject);  //Zeile X-X; Ausführen eines Zuges (Experimentell)
-    procedure CheckCapture();
+    procedure CheckCaptureGelb();
+    procedure CheckCaptureRot();
 private
  {Private-Deklarationen}
 public
@@ -403,6 +404,7 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
       ImSN[PosYZiel,PosXZiel].Visible:=false;
       ImSN[PosYZiel,PosXZiel].Enabled:=false;
       ImSN[PosYZiel,PosXZiel].SendToBack;
+      CheckCaptureGelb;
      end
 
     else  //Wenn Gelb zieht. Gleich wie oben.
@@ -421,51 +423,47 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
       ImSN[PosYZiel,PosXZiel].Visible:=false;
       ImSN[PosYZiel,PosXZiel].Enabled:=false;
       ImSN[PosYZiel,PosXZiel].SendToBack;
+      CheckCaptureRot;
      end;
        //Korrektur Sichtbarkeit der Umrandungen.
     ImP.BringToFront;
     ImP2.BringToFront;
-    CheckCapture;
+
 
     WaZ:=WaZ*-1;  //Wer auch immer dran war, jetzt ist der andere dran. Wer dran ist wird über die Variable "WaZ"(WerAmZug) bestimmt. Deswegen wird sie hier umgekehrt.
     AZA:=1;  //Korrektur Zustandsvariable.
    end;
 end;
 
-procedure TForm1.CheckCapture();
+procedure TForm1.CheckCaptureGelb();
 begin
   i := 0;
-  for j := PosXStart to PosXZiel do
+  ShowMessage('Capture Check Gelb');
+  for j := PosXStart to PosXZiel - 1 do
     begin
-        if WaZ = 1 then
-          begin
-            if ImSG[PosYStart + i,PosXStart + i].Visible = True then
-              begin
-                ImSG[PosYStart + i,PosXStart + i].Visible := False;
-                ImSN[PosYStart + i,PosXStart + i].Visible := True;
-                ShowMessage(IntToStr(PosYStart + i)+ ' ' + IntToStr(PosXStart + i));
-              end
-            else
-              begin
-                i := i + 1
-              end;
-
-          end
-        else
-          begin
-            if ImSR[PosYStart + i,PosXStart + i].Visible = True then
-              begin
-                ImSR[PosYStart + i,PosXStart + i].Visible := False;
-                ImSN[PosYStart + i,PosXStart + i].Visible := True;
-              end
-            else
-              begin
-                i := i + 1
-              end;
-          end;
-
+      if ImSG[PosYStart + i,PosXStart + i].Visible = True then
+        begin
+          ImSG[PosYStart + i,PosXStart + i].Visible := False;
+          ImSN[PosYStart + i,PosXStart + i].Visible := True;
+          ShowMessage(IntToStr(PosYStart + i)+ ' ' + IntToStr(PosXStart + i));
+          i := i + 1;
+        end;
     end;
-
 end;
 
+procedure TForm1.CheckCaptureRot();
+begin
+  i := 0;
+  ShowMessage('Capture Check Rot');
+  for j := PosXStart to PosXZiel - 1 do
+    begin
+      if ImSR[PosYStart + i,PosXStart + i].Visible = True then
+        begin
+          ImSR[PosYStart + i,PosXStart + i].Visible := False;
+          ImSN[PosYStart + i,PosXStart + i].Visible := True;
+          ShowMessage(IntToStr(PosYStart + i)+ ' ' + IntToStr(PosXStart + i));
+          i := i + 1;
+        end;
+    end;
+end;
 end.  //Ende. (-:
