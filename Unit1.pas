@@ -434,36 +434,71 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
     AZA:=1;  //Korrektur Zustandsvariable.
    end;
 end;
-
 procedure TForm1.CheckCaptureGelb();
 begin
-  i := 0;
-  ShowMessage('Capture Check Gelb');
-  for j := PosXStart to PosXZiel - 1 do
-    begin
-      if ImSG[PosYStart + i,PosXStart + i].Visible = True then
-        begin
-          ImSG[PosYStart + i,PosXStart + i].Visible := False;
-          ImSN[PosYStart + i,PosXStart + i].Visible := True;
-          ShowMessage(IntToStr(PosYStart + i)+ ' ' + IntToStr(PosXStart + i));
-          i := i + 1;
-        end;
-    end;
+  j := 1;
+  try
+    for i := PosXStart + 1 to PosXZiel - 1 do
+      begin
+        if ImSG[PosYStart + j,PosXStart + j].Visible = True then
+          begin
+            ImSG[PosYStart + j,PosXStart + j].Visible:=false;
+            ImSG[PosYStart + j,PosXStart + j].Enabled:=false;
+            ImSG[PosYStart + j,PosXStart + j].SendToBack;
+            ImSN[PosYStart + j,PosXStart + j].Visible:=true;
+            ImSN[PosYStart + j,PosXStart + j].Enabled:=true;
+            ImSN[PosYStart + j,PosXStart + j].BringToFront;
+          end;
+        j := j + 1;
+      end;
+  except
+     for i := PosXZiel + 1 to PosXStart - 1 do
+      begin
+        if ImSG[PosYStart + j,PosXStart + j].Visible = True then
+          begin
+            ImSG[PosYStart + j,PosXStart + j].Visible:=false;
+            ImSG[PosYStart + j,PosXStart + j].Enabled:=false;
+            ImSG[PosYStart + j,PosXStart + j].SendToBack;
+            ImSN[PosYStart + j,PosXStart + j].Visible:=true;
+            ImSN[PosYStart + j,PosXStart + j].Enabled:=true;
+            ImSN[PosYStart + j,PosXStart + j].BringToFront;
+          end;
+        j := j + 1;
+      end;
+  end;
+
 end;
 
 procedure TForm1.CheckCaptureRot();
 begin
-  i := 0;
-  ShowMessage('Capture Check Rot');
-  for j := PosXStart to PosXZiel - 1 do
+  j := 1;
+  try
+  for i := PosXStart + 1 to PosXZiel - 1 do
     begin
-      if ImSR[PosYStart + i,PosXStart + i].Visible = True then
+      showmessage( BoolToStr(ImSR[PosYStart + j,PosXStart + j].Visible) + sLineBreak
+          + BoolToStr(ImSR[PosYStart + j,PosXStart + j].Enabled)
+      );
+      if ImSR[PosYStart + j,PosXStart + j].Visible = True then
         begin
-          ImSR[PosYStart + i,PosXStart + i].Visible := False;
-          ImSN[PosYStart + i,PosXStart + i].Visible := True;
-          ShowMessage(IntToStr(PosYStart + i)+ ' ' + IntToStr(PosXStart + i));
-          i := i + 1;
+          ImSR[PosYStart + j,PosXStart + j].Visible:=false;
+          ImSR[PosYStart + j,PosXStart + j].Enabled:=false;
+          ImSR[PosYStart + j,PosXStart + j].SendToBack;
+          ImSN[PosYStart + j,PosXStart + j].Visible:=true;
+          ImSN[PosYStart + j,PosXStart + j].Enabled:=true;
+          ImSN[PosYStart + j,PosXStart + j].BringToFront;
         end;
+      j := j + 1;
     end;
+  except
+    j := j - 1
+    //on E: Exception do
+    //  ShowMessage(
+    //    E.Message + sLineBreak +
+    //    'X Start = ' + IntToStr(PosXStart) + sLineBreak
+    //    + 'X Ziel = ' + IntToStr(PosXZiel) + sLineBreak
+    //    + 'j = ' + IntToStr(j) + slineBreak
+    //    + 'i = ' + IntToStr(i)
+    //  );
+  end;
 end;
 end.  //Ende. (-:
