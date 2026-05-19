@@ -10,7 +10,9 @@ type
     TForm1 = class(TForm)  //Form
     LabelTitel: TLabel;  //Titel "Dame"
     LabelTitel2: TLabel;  //Untertitel "von Jonas und Valerii"
-    ButtonDebug: TButton; //Debug-Knopf, später löschen!!!
+    ButtonDebug: TButton;
+    Button1: TButton; //Debug-Knopf, später löschen!!!
+    procedure GenerateField();
     {}{}procedure FormCreate(Sender: TObject);  //Zeile X-X; Wird beim starten des Programms ausgeführt.
     {}{}procedure ButtonDebugClick(Sender: TObject);  //Zeile X-X; Debug
     {}{}procedure ClickHandlerRot(Sender: TObject);  //Zeile X-X; Zug von Spieler Rot
@@ -19,6 +21,8 @@ type
     {}{}procedure ClickHandlerElse(Sender: TObject);  //Zeile X-X; Ausführen eines Zuges (Experimentell)
     procedure CheckCaptureGelb();
     procedure CheckCaptureRot();
+    procedure BoardReset();
+    procedure Button1Click(Sender: TObject);
 private
  {Private-Deklarationen}
 public
@@ -37,16 +41,25 @@ implementation
 //Wenn irgendwo ein {}//{} vorsteht, muss/könnte man an der jeweiligen Zeile noch arbeiten.
 //Wenn irgendwo ein {}{} vorsteht, muss am Ende dort noch die Zeilenangabe eingetragen werden.
 
+procedure TForm1.Button1Click(Sender: TObject);
+begin
+  BoardReset;
+end;
+
 procedure TForm1.ButtonDebugClick(Sender: TObject); //Debug Knopf zum testen
  begin
   //ShowMessage('Debug: Debug');
   //ShowMessage(FloatToStr());
   //ShowMessage(IntToStr()) ;
+  BoardReset;
+ end;
+ procedure TForm1.FormCreate(Sender: TObject);
+ begin
+   GenerateField;
  end;
 
 
-
-procedure TForm1.FormCreate(Sender: TObject);  //Wird beim starten des Programms ausgeführt
+procedure TForm1.GenerateField();  //Wird beim starten des Programms ausgeführt
  begin
   AZA:=1;  //Wichtig für später.
   WaZ:=1;  //Rot wird zuerst ziehen.
@@ -434,71 +447,19 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
     AZA:=1;  //Korrektur Zustandsvariable.
    end;
 end;
-procedure TForm1.CheckCaptureGelb();
+//Board zuruecksetzen
+procedure TForm1.BoardReset();
 begin
-  j := 1;
-  try
-    for i := PosXStart + 1 to PosXZiel - 1 do
-      begin
-        if ImSG[PosYStart + j,PosXStart + j].Visible = True then
-          begin
-            ImSG[PosYStart + j,PosXStart + j].Visible:=false;
-            ImSG[PosYStart + j,PosXStart + j].Enabled:=false;
-            ImSG[PosYStart + j,PosXStart + j].SendToBack;
-            ImSN[PosYStart + j,PosXStart + j].Visible:=true;
-            ImSN[PosYStart + j,PosXStart + j].Enabled:=true;
-            ImSN[PosYStart + j,PosXStart + j].BringToFront;
-          end;
-        j := j + 1;
-      end;
-  except
-     for i := PosXZiel + 1 to PosXStart - 1 do
-      begin
-        if ImSG[PosYStart + j,PosXStart + j].Visible = True then
-          begin
-            ImSG[PosYStart + j,PosXStart + j].Visible:=false;
-            ImSG[PosYStart + j,PosXStart + j].Enabled:=false;
-            ImSG[PosYStart + j,PosXStart + j].SendToBack;
-            ImSN[PosYStart + j,PosXStart + j].Visible:=true;
-            ImSN[PosYStart + j,PosXStart + j].Enabled:=true;
-            ImSN[PosYStart + j,PosXStart + j].BringToFront;
-          end;
-        j := j + 1;
-      end;
-  end;
-
-end;
-
-procedure TForm1.CheckCaptureRot();
-begin
-  j := 1;
-  try
-  for i := PosXStart + 1 to PosXZiel - 1 do
+ShowMessage('Reset Board');
+  for i := 1 to 8 do
     begin
-      showmessage( BoolToStr(ImSR[PosYStart + j,PosXStart + j].Visible) + sLineBreak
-          + BoolToStr(ImSR[PosYStart + j,PosXStart + j].Enabled)
-      );
-      if ImSR[PosYStart + j,PosXStart + j].Visible = True then
+      for j := 1 to 8 do
         begin
-          ImSR[PosYStart + j,PosXStart + j].Visible:=false;
-          ImSR[PosYStart + j,PosXStart + j].Enabled:=false;
-          ImSR[PosYStart + j,PosXStart + j].SendToBack;
-          ImSN[PosYStart + j,PosXStart + j].Visible:=true;
-          ImSN[PosYStart + j,PosXStart + j].Enabled:=true;
-          ImSN[PosYStart + j,PosXStart + j].BringToFront;
+          ImSR[i,j].Free;
+          ImSG[i,j].Free;
         end;
-      j := j + 1;
     end;
-  except
-    j := j - 1
-    //on E: Exception do
-    //  ShowMessage(
-    //    E.Message + sLineBreak +
-    //    'X Start = ' + IntToStr(PosXStart) + sLineBreak
-    //    + 'X Ziel = ' + IntToStr(PosXZiel) + sLineBreak
-    //    + 'j = ' + IntToStr(j) + slineBreak
-    //    + 'i = ' + IntToStr(i)
-    //  );
-  end;
+  GenerateField;
 end;
+
 end.  //Ende. (-:
