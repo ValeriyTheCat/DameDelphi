@@ -10,17 +10,19 @@ type
     TForm1 = class(TForm)  //Form
     LabelTitel: TLabel;  //Titel "Dame"
     LabelTitel2: TLabel;  //Untertitel "von Jonas und Valerii"
-    ButtonDebug: TButton; //Debug-Knopf, später löschen!!!
-    {}{}procedure FormCreate(Sender: TObject);  //Zeile X-X; Wird beim starten des Programms ausgeführt.
-    {}{}procedure ButtonDebugClick(Sender: TObject);  //Zeile X-X
+    ButtonDebug: TButton;
+    Button1: TButton; //Debug-Knopf, spÃ¤ter lÃ¶schen!!!
+    procedure GenerateField();
+    {}{}procedure FormCreate(Sender: TObject);  //Zeile X-X; Wird beim starten des Programms ausgefÃ¼hrt.
+    {}{}procedure ButtonDebugClick(Sender: TObject);  //Zeile X-X; Debug
     {}{}procedure ClickHandlerRot(Sender: TObject);  //Zeile X-X; Zug von Spieler Rot
     {}{}procedure ClickHandlerGelb(Sender: TObject);  //Zeile X-X; Zug von Spieler Gelb
-    {}{}procedure ClickHandlerRotDame(Sender: TObject);  //Zeile X-X; Zug von Spieler  bei Dame
-    {}{}procedure ClickHandlerGelbDame(Sender: TObject);  //Zeile X-X; Zug von Spieler Gelb bei Dame
-    {}{}procedure Feldauswahl1(Sender: TObject);  //Zeile X-X; Ändert Zustand der Variablen PosXStart und PosYStart je nach Situation.
-    {}{}procedure ClickHandlerElse(Sender: TObject);  //Zeile X-X; Ausführen eines Zuges (Experimentell)
-    {}{}procedure Zurücksetzen(Sender: TObject);  //Zeile X-X; Zurücksetzen von allem
-
+    {}{}procedure Feldauswahl1(Sender: TObject);  //Zeile X-X; Ã„ndert Zustand der Variablen PosXStart und PosYStart je nach Situation.
+    {}{}procedure ClickHandlerElse(Sender: TObject);  //Zeile X-X; AusfÃ¼hren eines Zuges (Experimentell)
+    procedure CheckCaptureGelb();
+    procedure CheckCaptureRot();
+    procedure BoardReset();
+    procedure Button1Click(Sender: TObject);
 private
  {Private-Deklarationen}
 public
@@ -29,34 +31,43 @@ end;
 
 var  //Globale Variablen
  Form1: TForm1;  //Form
- ImH,ImSR,ImSG,ImSRD,ImSGD,ImSN:array [1..8,1..8] of TImage;  //ImH(ImageHintergrund) ist das Spielfeld, ImSR(ImageSpielsteinRot) und ImSG(ImageSpielsteinGelb) sind die standard Spielsteine. ImSRD/ImSGD (ImageSpielstein[Farbe]Dame) sind die umgewandelten Spielsteine. ImSN(ImageSpielsteinNichts) wird als klickbare Oberfläche zum ziehen von Spielsteinen verwendet.
+ ImH,ImSR,ImSG,ImSRD,ImSGD,ImSN:array [1..8,1..8] of TImage;  //ImH(ImageHintergrund) ist das Spielfeld, ImSR(ImageSpielsteinRot) und ImSG(ImageSpielsteinGelb) sind die standard Spielsteine. ImSRD/ImSGD (ImageSpielstein[Farbe]Dame) sind die umgewandelten Spielsteine. ImSN(ImageSpielsteinNichts) wird als klickbare Oberflï¿½che zum ziehen von Spielsteinen verwendet.
  ImP,ImP2: TImage;  //ImP(ImagePointer ist das blaue Rechteck, was wir als Umrandung benutzen.
- i,j,k,l,MPosX,MPosY,PosXStart,PosYStart,PosXZiel,PosYZiel,WaZ,AZA,SZ,DZ: Integer;  //i,jk und l werden als flexible Variablen für Schleifen, oder als kurzzeitiger Speicher genutzt. MPosX(MausPositionX) und MPosY(MausPositionY) werden zum zwischenspeichern der Mausposition auf der X und Y Achse genutzt (X=.Left,Y=.Top). Die Variablen PosXStart(PositionXStart), PosYStart(PositionYStart), PosXZiel(PositionXZiel) und PosYZiel(PositionYZiel) werden beim bewegen der Steine als Speicher genutzt, sie bestimmen welcher Stein (PosXStart und PosYStart) wohin (PosXZiel,PosYZiel) gezogen werden soll. WaZ(WerAmZug) hat nur die zwei Zustände 1 und -1, und wird als Zwischensspeicher im Auswahl-Prozess verwendet. AZA(AuswahlZugAuswahl) bestimmt den Zeitpunkt des Zugprozesses, beim ersten Klick ist AZA = 1, beim zweiten ist AZA = -1. Sz(Szenario) wird ab und zu als flexible Variable genutzt. DZ(DamenZug)wird genutz, um zu bestimmen welche Art von Spielstein Am Zug ist.
+ i,j,k,l,MPosX,MPosY,PosXStart,PosYStart,PosXZiel,PosYZiel,WaZ,AZA,SZ,DZ: Integer;  //i,jk und l werden als flexible Variablen fï¿½r Schleifen, oder als kurzzeitiger Speicher genutzt. MPosX(MausPositionX) und MPosY(MausPositionY) werden zum zwischenspeichern der Mausposition auf der X und Y Achse genutzt (X=.Left,Y=.Top). Die Variablen PosXStart(PositionXStart), PosYStart(PositionYStart), PosXZiel(PositionXZiel) und PosYZiel(PositionYZiel) werden beim bewegen der Steine als Speicher genutzt, sie bestimmen welcher Stein (PosXStart und PosYStart) wohin (PosXZiel,PosYZiel) gezogen werden soll. WaZ(WerAmZug) hat nur die zwei Zustï¿½nde 1 und -1, und wird als Zwischensspeicher im Auswahl-Prozess verwendet. AZA(AuswahlZugAuswahl) bestimmt den Zeitpunkt des Zugprozesses, beim ersten Klick ist AZA = 1, beim zweiten ist AZA = -1. Sz(Szenario) wird ab und zu als flexible Variable genutzt. DZ(DamenZug)wird genutz, um zu bestimmen welche Art von Spielstein Am Zug ist.
  MPos: TPoint;  //MPos(MausPosition) wird genutzt um die Mausposition zwischen zu speichern.
 
  //x: extended;
 
 implementation
 {$R *.dfm}
-//Wenn irgendwo ein {}//{} vorsteht, muss/könnte man an der jeweiligen Zeile noch arbeiten.
+//Wenn irgendwo ein {}//{} vorsteht, muss/kï¿½nnte man an der jeweiligen Zeile noch arbeiten.
 //Wenn irgendwo ein {}{} vorsteht, muss am Ende dort noch die Zeilenangabe eingetragen werden.
+
+procedure TForm1.Button1Click(Sender: TObject);
+begin
+  BoardReset;
+end;
 
 procedure TForm1.ButtonDebugClick(Sender: TObject); //Debug Knopf zum testen
  begin
-  Zurücksetzen(Self);
+  Zurï¿½cksetzen(Self);
   ImSRD[4,1].Visible:=true;
   ImSRD[4,1].Enabled:=true;
   ImSRD[4,1].BringToFront;
   //ShowMessage('Debug: Debug');
   //ShowMessage(FloatToStr());
   //ShowMessage(IntToStr()) ;
+  BoardReset;
+ end;
+ procedure TForm1.FormCreate(Sender: TObject);
+ begin
+   GenerateField;
  end;
 
 
-
-procedure TForm1.FormCreate(Sender: TObject);  //Wird beim starten des Programms ausgeführt
+procedure TForm1.GenerateField();  //Wird beim starten des Programms ausgefÃ¼hrt
  begin
-  AZA:=1;  //Wichtig für später.
+  AZA:=1;  //Wichtig fï¿½r spï¿½ter.
   WaZ:=1;  //Rot wird zuerst ziehen.
   k := 1;  //Hier: k bestimmt, wann Spielsteine gneriert werden und wann ein Hintergrund-Feld Braun bzw. Weiss ist.
   for i := 1 to 8 do  //Schleife zum Erstellen aller Felder/Spielsteine
@@ -66,28 +77,28 @@ procedure TForm1.FormCreate(Sender: TObject);  //Wird beim starten des Programms
       //Spielfeld Erstellen 1
       ImH[i,j]:=TImage.Create(Self);  //Erstellen
       ImH[i,j].Parent := Self;  //Erstellen
-      ImH[i,j].Left:=500+50*j;  //Position auf der X-Achse, abhängig von j
-      ImH[i,j].Top:=50+50*i;  //Position auf der Y-Achse, abhängig von i
-      ImH[i,j].Width:=50;  //Größe
-      ImH[i,j].Height:=50;  //Größe
-      ImH[i,j].AutoSize:=false;  //Größe (Korrektur)
+      ImH[i,j].Left:=500+50*j;  //Position auf der X-Achse, abhï¿½ngig von j
+      ImH[i,j].Top:=50+50*i;  //Position auf der Y-Achse, abhï¿½ngig von i
+      ImH[i,j].Width:=50;  //Grï¿½ï¿½e
+      ImH[i,j].Height:=50;  //Grï¿½ï¿½e
+      ImH[i,j].AutoSize:=false;  //Grï¿½ï¿½e (Korrektur)
       ImH[i,j].Visible:=true;  //Hintergrund ist am Anfang sichtbar
-      ImH[i,j].Enabled:=false;  //Hintergrund hat keine Funktion außer das Aussehen
-      ImH[i,j].Canvas.Brush.Style := bssolid;  //Hintergrund besteht aus AUSGEFÜLLTEN(bssolid) Rechtecken
+      ImH[i,j].Enabled:=false;  //Hintergrund hat keine Funktion auï¿½er das Aussehen
+      ImH[i,j].Canvas.Brush.Style := bssolid;  //Hintergrund besteht aus AUSGEFï¿½LLTEN(bssolid) Rechtecken
 
       //Spielsteine Erstellen
-{}{}      if k = -1 then  //Spielsteine werden nur aúf jedem zweiten Feld erstellt. Siehe Zeile X.
+{}{}      if k = -1 then  //Spielsteine werden nur aï¿½f jedem zweiten Feld erstellt. Siehe Zeile X.
        begin
         //Spielsteine Rot
         ImSR[i,j]:=TImage.Create(Self);  //Erstellen
         ImSR[i,j].Parent := Self;  //Erstellen
-        ImSR[i,j].Left:=500+50*j;  //Position auf der X-Achse, abhängig von j
-        ImSR[i,j].Top:=50+50*i;  //Position auf der Y-Achse, abhängig von i
-        ImSR[i,j].Width:=50;  //Größe
-        ImSR[i,j].Height:=50;  //Größe
-        ImSR[i,j].AutoSize:=false;  //Größe (Korrektur)
-        ImSR[i,j].Visible:=false;  //Da die Spielsteine überall erstellt werden wo sie irgendwann mal seien könnten, die meisten am Start aber nicht sichtbar sind, ist .visible standardmäßig false
-        ImSR[i,j].Enabled:=false;  //Da die Spielsteine überall erstellt werden wo sie irgendwann mal seien könnten, die meisten am Start aber nicht bewegbar sind, ist .enabled standardmäßig false
+        ImSR[i,j].Left:=500+50*j;  //Position auf der X-Achse, abhï¿½ngig von j
+        ImSR[i,j].Top:=50+50*i;  //Position auf der Y-Achse, abhï¿½ngig von i
+        ImSR[i,j].Width:=50;  //Grï¿½ï¿½e
+        ImSR[i,j].Height:=50;  //Grï¿½ï¿½e
+        ImSR[i,j].AutoSize:=false;  //Grï¿½ï¿½e (Korrektur)
+        ImSR[i,j].Visible:=false;  //Da die Spielsteine ï¿½berall erstellt werden wo sie irgendwann mal seien kï¿½nnten, die meisten am Start aber nicht sichtbar sind, ist .visible standardmï¿½ï¿½ig false
+        ImSR[i,j].Enabled:=false;  //Da die Spielsteine ï¿½berall erstellt werden wo sie irgendwann mal seien kï¿½nnten, die meisten am Start aber nicht bewegbar sind, ist .enabled standardmï¿½ï¿½ig false
         ImSR[i,j].Transparent := true;  //Funktioniert sonst nicht immer.
 
         //Spielsteine Rot erstellen: Generell 1
@@ -107,7 +118,7 @@ procedure TForm1.FormCreate(Sender: TObject);  //Wird beim starten des Programms
         ImSR[i,j].BringToFront;  //Damit die Spielsteine im Vordergrund sind.
 {}{}        ImSR[i,j].OnClick:=ClickHandlerRot;  //Auswahlprozess, siehe Zeile X.
 
-{}{}        //Spielsteine Gelb: Für Erklärung Siehe Oben "Spielsteine Rot", Zeile X-X.
+{}{}        //Spielsteine Gelb: Fï¿½r Erklï¿½rung Siehe Oben "Spielsteine Rot", Zeile X-X.
         ImSG[i,j]:=TImage.Create(Self);
         ImSG[i,j].Parent := Self;
         ImSG[i,j].Left:=500+50*j;
@@ -133,7 +144,7 @@ procedure TForm1.FormCreate(Sender: TObject);  //Wird beim starten des Programms
 {}{}        ImSG[i,j].OnClick:=ClickHandlerGelb;  //Auswahlprozess, siehe Zeile X
 
 
-        //Das gleiche noch zweimal für die Spielsteine als Dame
+        //Das gleiche noch zweimal fï¿½r die Spielsteine als Dame
         //Rote Damen
         ImSRD[i,j]:=TImage.Create(Self);
         ImSRD[i,j].Parent := Self;
@@ -178,7 +189,7 @@ procedure TForm1.FormCreate(Sender: TObject);  //Wird beim starten des Programms
 
 
 
-        //Oberfläche zum Ziehen erstellen
+        //Oberflï¿½che zum Ziehen erstellen
         ImSN[i,j]:=TImage.Create(Self);  //
         ImSN[i,j].Parent := Self;  //
         ImSN[i,j].Left:=500+50*j;  //
@@ -206,7 +217,7 @@ procedure TForm1.FormCreate(Sender: TObject);  //Wird beim starten des Programms
 {}{}       end;  //Bezogen auf: Spielsteine erstellen, Start bei Zeile X
 
       //Spielfeld erstellen 2
-      if k = -1 then //Bestimmt wann das Spielfeld mit weißer/brauner Farbe erstellt wird, siehe Zeile 48.
+      if k = -1 then //Bestimmt wann das Spielfeld mit weiï¿½er/brauner Farbe erstellt wird, siehe Zeile 48.
        begin
 {}{}        ImH[i,j].Canvas.Brush.Color:=clMaroon;  //Farbe, siehe oben, Zeile X.
        end
@@ -224,53 +235,53 @@ procedure TForm1.FormCreate(Sender: TObject);  //Wird beim starten des Programms
    end;
 
 
-  //Highlights zum feld auswählen erstellen
+  //Highlights zum feld auswï¿½hlen erstellen
   ImP:=TImage.Create(Self);  //Erstellen
   ImP.Parent:=Self;  //Erstellen
-  ImP.Width:=51;  //Größe
-  ImP.Height:=51;  //Größe
-  ImP.AutoSize:=False;  //Größe
+  ImP.Width:=51;  //Grï¿½ï¿½e
+  ImP.Height:=51;  //Grï¿½ï¿½e
+  ImP.AutoSize:=False;  //Grï¿½ï¿½e
   ImP.Left:=-100;  //Start-Position
   ImP.Top:=100;  //Start-Position
-  ImP.Transparent:=True;  //Sorgt dafür, dass man weiterhin das Spielfeld sehen kann.
+  ImP.Transparent:=True;  //Sorgt dafï¿½r, dass man weiterhin das Spielfeld sehen kann.
   //Bitmap erstellen
   ImP.Picture.Bitmap:=TBitmap.Create;  //Erstellen
   ImP.Picture.Bitmap.PixelFormat:=pf32bit;  //Format 32 damit man trasnsparente Pixel erstellen kann. --> Gefunden durch Recherche
-{}{}  ImP.Picture.Bitmap.SetSize(ImP.Width,ImP.Height);  //Bitmap Größe der Image Größe (Zeile X-X) gleichsetzen.
+{}{}  ImP.Picture.Bitmap.SetSize(ImP.Width,ImP.Height);  //Bitmap Grï¿½ï¿½e der Image Grï¿½ï¿½e (Zeile X-X) gleichsetzen.
   ImP.Picture.Bitmap.Canvas.FillRect(Rect(0,0,ImP.Width,ImP.Height)); //Rechteck auf der Bitmap erstellen.
-  ImP.Picture.Bitmap.Transparent := True;  //Sorgt dafür, dass man weiterhin das Spielfeld sehen
+  ImP.Picture.Bitmap.Transparent := True;  //Sorgt dafï¿½r, dass man weiterhin das Spielfeld sehen
   with ImP.Picture.Bitmap.Canvas do  //Eigenschaften der Bitmap deklarieren
    begin
     Pen.Color := clBlue; //Farbe
-    Pen.Width := 2; //Wie breit die Umrandung ist, 2 sieht schön aus.
-    Brush.Style := bsClear; //Nur Umrandung (des Rechtecks), bei "bssolid" wäre das ganze Feld bedeckt.
-    Rectangle(1, 1, ImP.Width - 1, ImP.Height - 1); //Rechteck erstellen. "ImP.Widtht - 1"/"ImP.Height - 1" sorgen dafür, dass die Ecke des Rechtecks auf dem letzten sichtbaren Pixel ist.
+    Pen.Width := 2; //Wie breit die Umrandung ist, 2 sieht schï¿½n aus.
+    Brush.Style := bsClear; //Nur Umrandung (des Rechtecks), bei "bssolid" wï¿½re das ganze Feld bedeckt.
+    Rectangle(1, 1, ImP.Width - 1, ImP.Height - 1); //Rechteck erstellen. "ImP.Widtht - 1"/"ImP.Height - 1" sorgen dafï¿½r, dass die Ecke des Rechtecks auf dem letzten sichtbaren Pixel ist.
    end;
-  ImP.BringToFront;  //Sorgt dafür, dass man die Umrandung auch sehen kann (bringt die Umrandung in den Vordergrund).
+  ImP.BringToFront;  //Sorgt dafï¿½r, dass man die Umrandung auch sehen kann (bringt die Umrandung in den Vordergrund).
 
   //Zweites Highlight
   ImP2:=TImage.Create(Self);  //Erstellen
   ImP2.Parent:=Self;  //Erstellen
-  ImP2.Width:=51;  //Größe
-  ImP2.Height:=51;  //Größe
-  ImP2.AutoSize:=False;  //Größe
+  ImP2.Width:=51;  //Grï¿½ï¿½e
+  ImP2.Height:=51;  //Grï¿½ï¿½e
+  ImP2.AutoSize:=False;  //Grï¿½ï¿½e
   ImP2.Left:=-100;  //Start-Position
   ImP2.Top:=100;  //Start-Position
-  ImP2.Transparent:=True;  //Sorgt dafür, dass man weiterhin das Spielfeld sehen kann.
+  ImP2.Transparent:=True;  //Sorgt dafï¿½r, dass man weiterhin das Spielfeld sehen kann.
   //Bitmap erstellen
   ImP2.Picture.Bitmap:=TBitmap.Create;  //Erstellen
   ImP2.Picture.Bitmap.PixelFormat:=pf32bit;  //Format 32 damit man trasnsparente Pixel erstellen kann. --> Gefunden durch Recherche
-  ImP2.Picture.Bitmap.SetSize(ImP2.Width,ImP2.Height);  //Bitmap Größe der Image Größe gleichsetzen.
+  ImP2.Picture.Bitmap.SetSize(ImP2.Width,ImP2.Height);  //Bitmap Grï¿½ï¿½e der Image Grï¿½ï¿½e gleichsetzen.
   ImP2.Picture.Bitmap.Canvas.FillRect(Rect(0,0,ImP2.Width,ImP2.Height)); //Rechteck auf der Bitmap erstellen.
-  ImP2.Picture.Bitmap.Transparent := True;  //Sorgt dafür, dass man weiterhin das Spielfeld sehen
+  ImP2.Picture.Bitmap.Transparent := True;  //Sorgt dafï¿½r, dass man weiterhin das Spielfeld sehen
   with ImP2.Picture.Bitmap.Canvas do  //Eigenschaften der Bitmap deklarieren
    begin
     Pen.Color := clgreen; //Farbe
-    Pen.Width := 2; //Wie breit die Umrandung ist, 2 sieht schön aus.
-    Brush.Style := bsClear; //Nur Umrandung (des Rechtecks), bei "bssolid" wäre das ganze Feld bedeckt.
-    Rectangle(1, 1, ImP2.Width - 1, ImP2.Height - 1); //Rechteck erstellen. "ImP.Widtht - 1"/"ImP.Height - 1" sorgen dafür, dass die Ecke des Rechtecks auf dem letzten sichtbaren Pixel ist.
+    Pen.Width := 2; //Wie breit die Umrandung ist, 2 sieht schï¿½n aus.
+    Brush.Style := bsClear; //Nur Umrandung (des Rechtecks), bei "bssolid" wï¿½re das ganze Feld bedeckt.
+    Rectangle(1, 1, ImP2.Width - 1, ImP2.Height - 1); //Rechteck erstellen. "ImP.Widtht - 1"/"ImP.Height - 1" sorgen dafï¿½r, dass die Ecke des Rechtecks auf dem letzten sichtbaren Pixel ist.
    end;
-  ImP2.BringToFront;  //Sorgt dafür, dass man die Umrandung auch sehen kann (bringt die Umrandung in den Vordergrund).
+  ImP2.BringToFront;  //Sorgt dafï¿½r, dass man die Umrandung auch sehen kann (bringt die Umrandung in den Vordergrund).
 
  end;
 
@@ -281,22 +292,22 @@ procedure TForm1.FormCreate(Sender: TObject);  //Wird beim starten des Programms
 
 
 
-procedure TForm1.Feldauswahl1(Sender: TObject);  //Ändert Zustand der Variablen PosXStart und PosYStart je nach Situation.
+procedure TForm1.Feldauswahl1(Sender: TObject);  //ï¿½ndert Zustand der Variablen PosXStart und PosYStart je nach Situation.
  begin
   GetCursorPos(MPos);  //Speichert die aktuelle Mausposition.
-  MPos := Form1.ScreenToClient(MPos);  //Sorgt dafür, das die Position realativ zum Fenster (also im selben "Koordinatensystem" wie die Komponenten) gespeichert wird.
-  MPosX := MPos.X - ImP.Width div 2;  //Nicht benötigt. Sorgt halt einfach dafür, dass die angegebene Position etwas verschoben ist. Wenn man jetzt in die Mitte klickt kommen ca. die Koordinaten von .Left und .Top des angeklickten Feldes raus. "div 2" = "/2", aber das Ergebnis ist automatisch gerundet.
+  MPos := Form1.ScreenToClient(MPos);  //Sorgt dafï¿½r, das die Position realativ zum Fenster (also im selben "Koordinatensystem" wie die Komponenten) gespeichert wird.
+  MPosX := MPos.X - ImP.Width div 2;  //Nicht benï¿½tigt. Sorgt halt einfach dafï¿½r, dass die angegebene Position etwas verschoben ist. Wenn man jetzt in die Mitte klickt kommen ca. die Koordinaten von .Left und .Top des angeklickten Feldes raus. "div 2" = "/2", aber das Ergebnis ist automatisch gerundet.
   MPosY  := MPos.Y - ImP.Height div 2;  //Siehe oben.
 
   //Setze PosXStart
-  i:=0;  //Reset für Schleife
-  PosXStart:=-1;  //Darf nicht i seien, muss unter 0 oder über 7 seien.
-  k:=475;  //StartPosition1 zum Überprüfen - 50
-  l:=525;  //StartPosition2 zum Überprüfen - 50
+  i:=0;  //Reset fï¿½r Schleife
+  PosXStart:=-1;  //Darf nicht i seien, muss unter 0 oder ï¿½ber 7 seien.
+  k:=475;  //StartPosition1 zum ï¿½berprï¿½fen - 50
+  l:=525;  //StartPosition2 zum ï¿½berprï¿½fen - 50
   while PosXStart <> i do
    begin
-    k:=k+50;  //zu überprüfende Position
-    l:=l+50;  //zu überprüfende Position
+    k:=k+50;  //zu ï¿½berprï¿½fende Position
+    l:=l+50;  //zu ï¿½berprï¿½fende Position
     i:=i+1;   //Aktuelle Reihe
     if MPosX > k then  //PositionTest1
      begin
@@ -309,14 +320,14 @@ procedure TForm1.Feldauswahl1(Sender: TObject);  //Ändert Zustand der Variablen 
    end;
 
   //Setze PosYStart
-  i:=0;  //Reset für Schleife
-  PosYStart:=-1;  //Darf nicht i seien, muss unter 0 oder über 7 seien.
-  k:=25;  //StartPosition1 zum Überprüfen - 50
-  l:=75;  //StartPosition2 zum Überprüfen - 50
+  i:=0;  //Reset fï¿½r Schleife
+  PosYStart:=-1;  //Darf nicht i seien, muss unter 0 oder ï¿½ber 7 seien.
+  k:=25;  //StartPosition1 zum ï¿½berprï¿½fen - 50
+  l:=75;  //StartPosition2 zum ï¿½berprï¿½fen - 50
   while PosYStart <> i do
    begin
-    k:=k+50;  //zu überprüfende Position
-    l:=l+50;  //zu überprüfende Position
+    k:=k+50;  //zu ï¿½berprï¿½fende Position
+    l:=l+50;  //zu ï¿½berprï¿½fende Position
     i:=i+1;   //Aktuelle Reihe
     if MPosY > k then  //PositionTest1
      begin
@@ -334,24 +345,24 @@ procedure TForm1.Feldauswahl1(Sender: TObject);  //Ändert Zustand der Variablen 
 
 {}{}procedure TForm1.ClickHandlerRot(Sender: TObject);  //Genutzt in Zeile X
  begin
-  if WaZ = 1 then  //Wird nur ausgeführt wenn Rot auch am Zug ist.
+  if WaZ = 1 then  //Wird nur ausgefï¿½hrt wenn Rot auch am Zug ist.
    begin
-    if AZA = 1 then  //Wird nur ausgefüht, wenn zuvor noch kein Stein ausgewählt wurde.
+    if AZA = 1 then  //Wird nur ausgefï¿½ht, wenn zuvor noch kein Stein ausgewï¿½hlt wurde.
      begin
-{}{}      Feldauswahl1(Self);  //Wählt Feld aus. Siehe Zeile X.
+{}{}      Feldauswahl1(Self);  //Wï¿½hlt Feld aus. Siehe Zeile X.
       DZ:=-1;  //Es zieht keine Dame
      end
     else
      begin
-      ShowMessage('Da kannst du nicht hinziehen!');  //Wenn bereits ein Stein ausgewählt wurde, kann kein neuer ausgewählt werden. Wenn dieser Fall eintritt, versucht der Nutzer einen Stein auf einen anderen Stein zu ziehen, was nicht geht.
+      ShowMessage('Da kannst du nicht hinziehen!');  //Wenn bereits ein Stein ausgewï¿½hlt wurde, kann kein neuer ausgewï¿½hlt werden. Wenn dieser Fall eintritt, versucht der Nutzer einen Stein auf einen anderen Stein zu ziehen, was nicht geht.
       ImP.Left:=-100;  //In dem oben genannten Fall werden Pointer weggenommen.
       ImP2.Left:=-100;  //
      end;
-{}{}    AZA:=AZA*-1;  //Stein wurde ausgewählt. Jetzt darf die Prozedur "Feldauswahl2" in Zeile X ausgeführt werden.
+{}{}    AZA:=AZA*-1;  //Stein wurde ausgewï¿½hlt. Jetzt darf die Prozedur "Feldauswahl2" in Zeile X ausgefï¿½hrt werden.
    end
   else
    begin
-{}{}    ShowMessage('Illegaler Zug!');  //"else" bezieht sich auf Zeile X. Wird ausgeführt wenn Rot nicht am Zug ist.
+{}{}    ShowMessage('Illegaler Zug!');  //"else" bezieht sich auf Zeile X. Wird ausgefï¿½hrt wenn Rot nicht am Zug ist.
     AZA:=1;  //Fehlervorbeugung.
     ImP.Left:=-100;  //Da der Zug abgebrochen wurde, werden die Pointer "entfernt".
     ImP2.Left:=-100;
@@ -444,24 +455,24 @@ procedure TForm1.ClickHandlerGelbDame(Sender: TObject);
 
 
 
-procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt eines Zuges ausgeführt, d.h. wenn man ein leeres Feld anklickt, nachdem man einen Stein ausgewählt hat.
+procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt eines Zuges ausgefï¿½hrt, d.h. wenn man ein leeres Feld anklickt, nachdem man einen Stein ausgewï¿½hlt hat.
  begin
   if AZA = -1 then  //Bedingung, siehe oben
    begin
     GetCursorPos(MPos);  //Speichert die aktuelle Mausposition.
-    MPos := Form1.ScreenToClient(MPos);  //Sorgt dafür, das die Position realativ zum Fenster (also im selben "Koordinatensystem" wie die Komponenten) gespeichert wird.
-    MPosX := MPos.X - ImP2.Width div 2;  //Nicht benötigt. Sorgt halt einfach dafür, dass die angegebene Position etwas verschoben ist. Wenn man jetzt in die Mitte klickt kommen ca. die Koordinaten von .Left und .Top des angeklickten Feldes raus. "div 2" = "/2", aber das Ergebnis ist automatisch gerundet.
+    MPos := Form1.ScreenToClient(MPos);  //Sorgt dafï¿½r, das die Position realativ zum Fenster (also im selben "Koordinatensystem" wie die Komponenten) gespeichert wird.
+    MPosX := MPos.X - ImP2.Width div 2;  //Nicht benï¿½tigt. Sorgt halt einfach dafï¿½r, dass die angegebene Position etwas verschoben ist. Wenn man jetzt in die Mitte klickt kommen ca. die Koordinaten von .Left und .Top des angeklickten Feldes raus. "div 2" = "/2", aber das Ergebnis ist automatisch gerundet.
     MPosY  := MPos.Y - ImP2.Height div 2;  //Siehe oben.
 
     //Setze PosXZiel
-    i:=0;  //Reset für Schleife
-    PosXZiel:=-1;  //Darf nicht i seien, muss unter 0 oder über 7 seien.
-    k:=475;  //StartPosition1 zum Überprüfen - 50
-    l:=525;  //StartPosition2 zum Überprüfen - 50
+    i:=0;  //Reset fï¿½r Schleife
+    PosXZiel:=-1;  //Darf nicht i seien, muss unter 0 oder ï¿½ber 7 seien.
+    k:=475;  //StartPosition1 zum ï¿½berprï¿½fen - 50
+    l:=525;  //StartPosition2 zum ï¿½berprï¿½fen - 50
     while PosXZiel <> i do
      begin
-      k:=k+50;  //zu überprüfende Position
-      l:=l+50;  //zu überprüfende Position
+      k:=k+50;  //zu ï¿½berprï¿½fende Position
+      l:=l+50;  //zu ï¿½berprï¿½fende Position
       i:=i+1;   //Aktuelle Reihe
       if MPosX > k then  //PositionTest1
        begin
@@ -474,14 +485,14 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
      end;
 
     //Setze PosYZiel
-    i:=0;  //Reset für Schleife
-    PosYZiel:=-1;  //Darf nicht i seien, muss unter 0 oder über 7 seien.
-    k:=25;  //StartPosition1 zum Überprüfen - 50
-    l:=75;  //StartPosition2 zum Überprüfen - 50
+    i:=0;  //Reset fï¿½r Schleife
+    PosYZiel:=-1;  //Darf nicht i seien, muss unter 0 oder ï¿½ber 7 seien.
+    k:=25;  //StartPosition1 zum ï¿½berprï¿½fen - 50
+    l:=75;  //StartPosition2 zum ï¿½berprï¿½fen - 50
     while PosYZiel <> i do
      begin
-      k:=k+50;  //zu überprüfende Position
-      l:=l+50;  //zu überprüfende Position
+      k:=k+50;  //zu ï¿½berprï¿½fende Position
+      l:=l+50;  //zu ï¿½berprï¿½fende Position
       i:=i+1;   //Aktuelle Reihe
       if MPosY > k then  //PositionTest1
        begin
@@ -494,7 +505,7 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
      end;
 
      //Vorzeichen Dreher
-    //Überprüfung ob Zug legal (Normaler Zug, schlagen, Kette, Zug als Dame, Kette-Dame/Schlage-Dame)
+    //ï¿½berprï¿½fung ob Zug legal (Normaler Zug, schlagen, Kette, Zug als Dame, Kette-Dame/Schlage-Dame)
     SZ:=0;
     k:=0;
     if WaZ = 1 then //ROT
@@ -804,14 +815,14 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
        end;
      end;
 
-   //Zug Ausführen, wenn SZ (Szenario) 1, also Zug legal ist.
+   //Zug Ausfï¿½hren, wenn SZ (Szenario) 1, also Zug legal ist.
     if SZ = 1 then
      begin
       if DZ = -1 then
        begin
         if WaZ = 1 then  //Wenn Rot zieht.
          begin  //Wenn ein normaler Stein zieht
-          //Alten Stein unsichtbar machen. Oberfläche vorbereiten, falls in der Zukunft ein anderer Stein auf das selbe Feld gezogen wird.
+          //Alten Stein unsichtbar machen. Oberflï¿½che vorbereiten, falls in der Zukunft ein anderer Stein auf das selbe Feld gezogen wird.
           ImSR[PosYStart,PosXStart].Visible:=false;
           ImSR[PosYStart,PosXStart].Enabled:=false;
           ImSR[PosYStart,PosXStart].SendToBack;
@@ -884,7 +895,7 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
       ImP.BringToFront;
       ImP2.BringToFront;
 
-      WaZ:=WaZ*-1;  //Wer auch immer dran war, jetzt ist der andere dran. Wer dran ist wird über die Variable "WaZ"(WerAmZug) bestimmt. Deswegen wird sie hier umgekehrt.
+      WaZ:=WaZ*-1;  //Wer auch immer dran war, jetzt ist der andere dran. Wer dran ist wird ï¿½ber die Variable "WaZ"(WerAmZug) bestimmt. Deswegen wird sie hier umgekehrt.
       AZA:=1;  //Korrektur Zustandsvariable.
      end
     else //Wenn illegaler Zug
@@ -899,7 +910,7 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
 
 
 
-procedure TForm1.Zurücksetzen(Sender: TObject);
+procedure TForm1.Zurï¿½cksetzen(Sender: TObject);
  begin
   for i := 1 to 8 do
    begin
@@ -912,12 +923,20 @@ procedure TForm1.Zurücksetzen(Sender: TObject);
       ImSN[i,j].Free;
      end;
    end;
-  ImP.Free;
-  ImP2.Free;
-  FormCreate(Self);
- end;
-
-
-
+end;
+//Board zuruecksetzen
+procedure TForm1.BoardReset();
+begin
+ShowMessage('Reset Board');
+  for i := 1 to 8 do
+    begin
+      for j := 1 to 8 do
+        begin
+          ImSR[i,j].Free;
+          ImSG[i,j].Free;
+        end;
+    end;
+  GenerateField;
+end;
 
 end.  //Ende. (-:

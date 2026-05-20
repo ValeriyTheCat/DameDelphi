@@ -47,4 +47,13 @@ object Form1: TForm1
     TabOrder = 0
     OnClick = ButtonDebugClick
   end
+  object Button1: TButton
+    Left = 104
+    Top = 511
+    Width = 113
+    Height = 25
+    Caption = 'Board zur'#252'cksetzen'
+    TabOrder = 1
+    OnClick = Button1Click
+  end
 end
