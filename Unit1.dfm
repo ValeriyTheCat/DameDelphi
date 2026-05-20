@@ -45,5 +45,6 @@ object Form1: TForm1
     Height = 25
     Caption = 'ButtonDebug'
     TabOrder = 0
+    OnClick = ButtonDebugClick
   end
 end
