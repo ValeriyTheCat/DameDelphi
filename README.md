@@ -309,41 +309,79 @@ Danach kommt der Code für die Überprüfung für Legalität eines Zuges(Code is
 
 ```
 ...
-Danach kommt die Procedur für das Zurücksetzen des Felds
+Danach kommt die Procedur für das Zurücksetzen des Bretts
 
 ```pascal
-//Überprüfung ob Zug legal (Normaler Zug, schlagen, Kette, Zug als Dame, Kette-Dame/Schlage-Dame)
-    SZ:=0;  //Korrekter Start-Zustand. Hier: SZ wird genutzt um festzulegen, ob der Zug legal ist (0=Illegal, 1=legal)
-    k:=0;  //Fehlerprevention. Nur existierende Felder können bearbeitet werden.
-    //Wenn;
-    if WaZ = 1 then  //rot,
+{}{}procedure TForm1.Zurücksetzen(Sender: TObject);  //Zurücksetzen des Feldes. genutzt entweder manuell durch das drücken eines Knopfes, (oder ggf. in der Vollversion automatisch nach einem Sieg)
+ begin
+  ImP.Left:=-100;  //Umrandungen werden "entfernt".
+  ImP2.Left:=-100;  //Siehe oben
+{}{}  k := 1;  //k bestimmt in der folgenden Sequenz, wann ein Spielstein "entfernt" wird, da nicht auf allen Feldern (nicht auf den weisen) ein Spielstein generiert wurde (Siehe Zeile X)
+  for i := 1 to 8 do
+   begin
+    for j := 1 to 8 do
      begin
-      if DZ = -1 then  //keine Dame,
+      if k = -1 then  //Spielsteine werden nur auf jedem zweiten Feld erstellt. Siehe Zeile X.
        begin
-        if PosYZiel = (PosYStart - 1) then  //einen normaler Zug
+        ImSR[i,j].Visible:=false;  //Spielsteine werden zurück gesetzt...
+        ImSR[i,j].Enabled:=false;
+        ImSR[i,j].SendToBack;
+        if i >= 6 then  //Sichtbar in den Reihen 6, 7 und 8.
          begin
-          if (PosXZiel - PosXStart)*(-(PosXZiel - PosXStart)) = -1 then  //Nach rechts oder links (Wenn z.B. von X6 nach X5, dann (6-5)*-(6-5)=1*-1=-1, wenn z.B. von X5 nach X6 dann (5-6)*-(5-6)=-1*-(-1)=-1*1=-1)
-           begin
-            SZ:=1;  //Zug ist legal
-           end;
-         end
-        else
-         begin //einen Stein schlägt
-          if PosYZiel = (PosYStart - 2) then  //Überprüfen, ob Zug legal seien könnte
-           begin
-            if PosXZiel = (PosXStart + 2) then  //Schlagen rechts
-             begin
-              if ImSG[(PosYZiel + 1),(PosXStart + 1)].Enabled = true then  //Überprüfung, ob da auch ein Schlagbarer Stein war.
-               begin
-                SZ:=1;  //Zug legal
-                ImSG[(PosYZiel + 1),(PosXStart + 1)].Enabled:=false;  //Leeren des Feldes, wo der geschlagene Stein ist
-                ImSG[(PosYZiel + 1),(PosXStart + 1)].Visible:=false;  //Siehe oben
-                ImSG[(PosYZiel + 1),(PosXStart + 1)].SendToBack;  //Siehe oben
-                ImSN[(PosYZiel + 1),(PosXStart + 1)].Enabled:=true;  //Siehe oben
-                ImSN[(PosYZiel + 1),(PosXStart + 1)].Visible:=true;  //Siehe oben
-                ImSN[(PosYZiel + 1),(PosXStart + 1)].BringToFront;  //Siehe oben
-               end
+          ImSR[i,j].Visible:=true;
+          ImSR[i,j].Enabled:=true;
+          ImSR[i,j].BringToFront;
+         end;
 
+{}{}        ImSG[i,j].Visible:=false;  //Siehe oben (Zeile X)
+        ImSG[i,j].Enabled:=false;
+        ImSG[i,j].SendToBack;
+        if i <= 3 then
+         begin
+          ImSG[i,j].Visible:=true;
+          ImSG[i,j].Enabled:=true;
+          ImSG[i,j].BringToFront;
+         end;
+
+        //Alle Damen werden "entfernt"
+        ImSRD[i,j].Visible:=false;
+        ImSRD[i,j].Enabled:=false;
+        ImSRD[i,j].SendToBack;
+        ImSGD[i,j].Visible:=false;
+        ImSGD[i,j].Enabled:=false;
+        ImSGD[i,j].SendToBack;
+
+        //Zurücksetzen der Clickbaren leeren Felder
+        ImSN[i,j].Visible:=false;
+        ImSN[i,j].Enabled:=false;
+        ImSN[i,j].SendToBack;
+        if i > 3 then
+         begin
+          if i < 6 then
+           begin
+            ImSN[i,j].Visible:=true;
+            ImSN[i,j].Enabled:=true;
+            ImSN[i,j].BringToFront;
+           end;
+         end;
+       end;
+
+      ImH[i,j].SendToBack;  //Damit das Spielfeld im Hintergrund ist.
+
+      //Korrekter Zustand k Variable (bestimmt wo/wann die Spielsteine erstellt werden).
+      k:=k*-1;  //Siehe oben
+     end;
+    k:=k*-1;  //Siehe oben
+   end;
+  AzA:=1;  //Der erste Zug beginnt mit dem auswählen eines Steines
+  WaZ:=1;  //Rot ist am Anfang am Zug
+  ImP.BringToFront;  //Damit die Pointer im Vordergrund sind.
+  ImP2.BringToFront;  //Siehe oben
+ end;
+
+
+
+end.  //Ende. (-:[>
 ```
 
 
