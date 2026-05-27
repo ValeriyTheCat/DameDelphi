@@ -1,4 +1,4 @@
-object Form1: TForm1
+﻿object Form1: TForm1
   Left = 0
   Top = 0
   Caption = 'Form1'
@@ -38,6 +38,20 @@ object Form1: TForm1
     Font.Style = []
     ParentFont = False
   end
+  object WaZLabel: TLabel
+    Left = 800
+    Top = 512
+    Width = 161
+    Height = 27
+    AutoSize = False
+    Caption = 'Rot ist am Zug'
+    Font.Charset = ANSI_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -21
+    Font.Name = 'Yu Gothic'
+    Font.Style = [fsBold, fsItalic]
+    ParentFont = False
+  end
   object ButtonDebug: TButton
     Left = 120
     Top = 480
@@ -47,13 +61,13 @@ object Form1: TForm1
     TabOrder = 0
     OnClick = ButtonDebugClick
   end
-  object Button1: TButton
-    Left = 104
-    Top = 511
-    Width = 113
-    Height = 25
-    Caption = 'Board zur'#252'cksetzen'
+  object KnZurücksetzen: TButton
+    Left = 552
+    Top = 512
+    Width = 75
+    Height = 27
+    Caption = 'Zur'#252'cksetzen'
     TabOrder = 1
-    OnClick = Button1Click
+    OnClick = KnZurücksetzenClick
   end
 end
