@@ -49,14 +49,16 @@ procedure TForm1.ButtonDebugClick(Sender: TObject); //Debug Knopf zum testen
   //ShowMessage('Debug: Debug');
   //ShowMessage(FloatToStr(x));
   //ShowMessage(IntToStr(l)) ;
+  ImSRD[4,1].Visible:=true;
+  ImSRD[4,1].BringToFront;
  end;
 
 
 
 procedure TForm1.FormCreate(Sender: TObject);  //Wird beim starten des Programms ausgeführt
  begin
-  ButtonDebug.Visible:=false;  //Wird später entfernt
-  ButtonDebug.Enabled:=false;  //Wird später entfernt
+  //ButtonDebug.Visible:=false;  //Wird später entfernt
+  //ButtonDebug.Enabled:=false;  //Wird später entfernt
   AZA:=1;  //Wichtig für später.
   WaZ:=1;  //Rot wird zuerst ziehen.
   k := 1;  //Hier: k bestimmt, wann Spielsteine gneriert werden und wann ein Hintergrund-Feld Braun bzw. Weiss ist.
@@ -510,6 +512,12 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
           if (PosXZiel - PosXStart)*(-(PosXZiel - PosXStart)) = -1 then  //Nach rechts oder links (Wenn z.B. von X6 nach X5, dann (6-5)*-(6-5)=1*-1=-1, wenn z.B. von X5 nach X6 dann (5-6)*-(5-6)=-1*-(-1)=-1*1=-1)
            begin
             SZ:=1;  //Zug ist legal
+
+            //Konnte schlagen?
+           
+
+
+
            end;
          end
         else
@@ -683,6 +691,7 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
           if (PosXZiel - PosXStart)*(-(PosXZiel - PosXStart)) = -1 then
            begin
             SZ:=1;
+            //Es sei den ein stein kan schlagen
            end;
          end
         else
@@ -737,6 +746,7 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
              end;
            end;
          end;
+         //wenn geschlagen (SZ1), dann S = 1.
        end
       else
        begin  //dame
@@ -942,13 +952,6 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
          end;
        end;
 
-      //Korrektur; Sichtbarkeit der Umrandungen.
-      ImP.BringToFront;
-      ImP2.BringToFront;
-
-      WaZ:=WaZ*-1;  //Wer auch immer dran war, jetzt ist der andere dran. Wer dran ist wird über die Variable "WaZ"(WerAmZug) bestimmt. Deswegen wird sie hier umgekehrt.
-      AZA:=1;  //Korrektur Zustandsvariable.
-
       //Sieg Überprüfung
 {}{}  k := 1;  //k bestimmt in der folgenden Sequenz, wann ein Spielstein überprüft wird, da nicht auf allen Feldern (nicht auf den weisen) ein Spielstein generiert wurde (Siehe Zeile X)
       l:=12;
@@ -985,6 +988,15 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
         Sleep(800);
         Zurücksetzen(Self);
        end;
+
+      //Korrektur; Sichtbarkeit der Umrandungen.
+      ImP.BringToFront;
+      ImP2.BringToFront;
+
+      WaZ:=WaZ*-1;  //Wer auch immer dran war, jetzt ist der andere dran. Wer dran ist wird über die Variable "WaZ"(WerAmZug) bestimmt. Deswegen wird sie hier umgekehrt.
+      AZA:=1;  //Korrektur Zustandsvariable.
+
+
      end
     else //Wenn illegaler Zug
      begin
@@ -1010,6 +1022,7 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
 
 {}{}procedure TForm1.Zurücksetzen(Sender: TObject);  //Zurücksetzen des Feldes. genutzt entweder manuell durch das drücken eines Knopfes, (oder ggf. in der Vollversion automatisch nach einem Sieg)
  begin
+  WaZLabel.Caption:='Rot ist am Zug';
   ImP.Left:=-100;  //Umrandungen werden "entfernt".
   ImP2.Left:=-100;  //Siehe oben
 {}{}  k := 1;  //k bestimmt in der folgenden Sequenz, wann ein Spielstein "entfernt" wird, da nicht auf allen Feldern (nicht auf den weisen) ein Spielstein generiert wurde (Siehe Zeile X)
