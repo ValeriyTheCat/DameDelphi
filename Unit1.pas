@@ -1397,4 +1397,4 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
 
 
 
- end.  //Ende. (-:[>
+ end.  //Ende. (UwU)
