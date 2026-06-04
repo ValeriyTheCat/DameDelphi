@@ -30,9 +30,7 @@ ImSN(ImageSpielsteinNichts) wird als klickbare Oberfläche zum Ziehen von Spiels
 
 ImP(ImagePointer)  und ImP2(ImagePointer2) ist das blaue bzw. grüne Rechteck, was wir als Umrandung benutzen.
 
-i, j, k und l werden als flexible Variablen für Schleifen, oder als kurzzeitiger Speicher genutzt.
-
-MPosX(MausPositionX) und MPosY(MausPositionY) werden zum zwischenspeichern der Mausposition auf der X und Y Achse genutzt (X=.Left,Y=.Top).
+i,j,k,l,m, werden als flexible Variablen für Schleifen, oder als kurzzeitiger Speicher genutzt. 
 
 Die Variablen PosXStart(PositionXStart), PosYStart(PositionYStart), PosXZiel(PositionXZiel) und PosYZiel(PositionYZiel) werden beim bewegen der Steine als Speicher genutzt, sie bestimmen welcher Stein (PosXStart und PosYStart) wohin (PosXZiel,PosYZiel) gezogen werden soll.
 
@@ -41,6 +39,10 @@ WaZ(WerAmZug) hat nur die zwei Zustände 1 und -1, und wird als Zwischensspeiche
 AZA(AuswahlZugAuswahl) bestimmt den Zeitpunkt des Zugprozesses, beim ersten Klick ist AZA = 1, beim zweiten ist AZA = -1.
 
 MPos(MausPosition) wird genutzt um die Mausposition zwischen zu speichern.
+
+Sz(Szenario) wird ab und zu als flexible Variable genutzt. 
+
+DZ(DamenZug)wird genutz, um zu bestimmen welche Art von Spielstein Am Zug ist.
 
 ### Code
 
@@ -128,7 +130,7 @@ ImP.BringToFront;  //Sorgt dafür, dass man die Umrandung auch sehen kann (bring
 
 
 ```
-Nach der Erstellung des Pointers, kommt die Logik seine Logik.
+Nach der Erstellung des Pointers, kommt seine Logik.
 
 ```pascal
 procedure TForm1.Feldauswahl1(Sender: TObject);  //Ändert Zustand der Variablen PosXStart und PosYStart je nach Situation.
@@ -181,39 +183,45 @@ end;
 
 
 ```
-Nach der Logik der Beiden Pointer kommt der Code nun für die Bewegung der Steine ( Code für Gelb und Rot ist gleich).
+Nach der Logik der Beiden Pointer kommt der Code nun für die Bewegung der Steine ( Code für Gelb und Rot ist gleich, Code für Bewegung von Dame ist sehr änlich, deshalb wird es nitch nochmal erwähnt).
 
 ```pascal
 procedure TForm1.ClickHandlerRot(Sender: TObject);  //Genutzt in Zeile X
-begin
-if WaZ = 1 then  //Wird nur ausgeführt wenn Rot auch am Zug ist.
  begin
-  if AZA = 1 then  //Wird nur ausgefüht, wenn zuvor noch kein Stein ausgewählt wurde.
+  if WaZ = 1 then  //Wird nur ausgeführt wenn Rot auch am Zug ist.
    begin
-Feldauswahl1(Self);  //Wählt Feld aus. Siehe Zeile X.
+    if AZA = 1 then  //Wird nur ausgefüht, wenn zuvor noch kein Stein ausgewählt wurde.
+     begin
+        Feldauswahl1(Self);  //Wählt Feld aus. Siehe Zeile X.
+      DZ:=-1;  //Es zieht keine Dame
+     end
+    else
+     begin
+      ShowMessage('Da kannst du nicht hinziehen!');  //Wenn bereits ein Stein ausgewählt wurde, kann kein neuer ausgewählt werden. Wenn dieser Fall eintritt, versucht der Nutzer einen Stein auf einen anderen Stein zu ziehen, was nicht geht.
+      ImP.Left:=-100;  //In dem oben genannten Fall werden Pointer weggenommen.
+      ImP2.Left:=-100;  //
+     end;
+       AZA:=AZA*-1;  //Stein wurde ausgewählt. Jetzt darf die Prozedur "Feldauswahl2" in Zeile X ausgeführt werden.
    end
   else
    begin
-    ShowMessage('Da kannst du nicht hinziehen!');  //Wenn bereits ein Stein ausgewählt wurde, kann kein neuer ausgewählt werden. Wenn dieser Fall eintritt, versucht der Nutzer einen Stein auf einen anderen Stein zu ziehen, was nicht geht.
-    ImP.Left:=-100;  //In dem oben genannten Fall werden Pointer weggenommen.
-    ImP2.Left:=-100;  //
+       ShowMessage('Illegaler Zug!');  //"else" bezieht sich auf Zeile X. Wird ausgeführt wenn Rot nicht am Zug ist.
+    AZA:=1;  //Fehlervorbeugung.
+    ImP.Left:=-100;  //Da der Zug abgebrochen wurde, werden die Pointer "entfernt".
+    ImP2.Left:=-100;
    end;
-    AZA:=AZA*-1;  //Stein wurde ausgewählt. Jetzt darf die Prozedur "Feldauswahl2" in Zeile X ausgeführt werden.
  end
-else
- begin
-    ShowMessage('Illagaler Zug!');  //"else" bezieht sich auf Zeile X. Wird ausgeführt wenn Rot nicht am Zug ist.
-  AZA:=1;  //Fehlervorbeugung.
-  ImP.Left:=-100;  //Da der Zug abgebrochen wurde, werden die Pointer "entfernt".
-  ImP2.Left:=-100;
- end;
-end;
 
 ```
+
+
+
+
 
 Nach dem man ein Stein ausgewählt hat, wählt man ein leeres Feld. Die Bewegung selbst ist implementiert da durch, dass wir den ausgewählten Stein unsichtbar, und auf den gewählten Feld den Stein sichtbar machen und den Stein auf dem gewählten Feld sichtbar machen.
 
 ```pascal
+
 procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt eines Zuges ausgeführt, d.h. wenn man ein leeres Feld anklickt, nachdem man einen Stein ausgewählt hat.
  begin
   if AZA = -1 then  //Bedingung, siehe oben
@@ -262,45 +270,125 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
          end;
        end;
      end;
-   end;
+```
 
-  if WaZ = 1 then  //Wenn Rot zieht.
+Danach kommt der Code für die Überprüfung für Legalität eines Zuges(Code ist zu lang um es hier komplet zu zeigen)
+
+```pascal
+//Überprüfung ob Zug legal (Normaler Zug, schlagen, Kette, Zug als Dame, Kette-Dame/Schlage-Dame)
+    SZ:=0;  //Korrekter Start-Zustand. Hier: SZ wird genutzt um festzulegen, ob der Zug legal ist (0=Illegal, 1=legal)
+    k:=0;  //Fehlerprevention. Nur existierende Felder können bearbeitet werden.
+    //Wenn;
+    if WaZ = 1 then  //rot,
+     begin
+      if DZ = -1 then  //keine Dame,
+       begin
+        if PosYZiel = (PosYStart - 1) then  //einen normaler Zug
+         begin
+          if (PosXZiel - PosXStart)*(-(PosXZiel - PosXStart)) = -1 then  //Nach rechts oder links (Wenn z.B. von X6 nach X5, dann (6-5)*-(6-5)=1*-1=-1, wenn z.B. von X5 nach X6 dann (5-6)*-(5-6)=-1*-(-1)=-1*1=-1)
+           begin
+            SZ:=1;  //Zug ist legal
+           end;
+         end
+        else
+         begin //einen Stein schlägt
+          if PosYZiel = (PosYStart - 2) then  //Überprüfen, ob Zug legal seien könnte
+           begin
+            if PosXZiel = (PosXStart + 2) then  //Schlagen rechts
+             begin
+              if ImSG[(PosYZiel + 1),(PosXStart + 1)].Enabled = true then  //Überprüfung, ob da auch ein Schlagbarer Stein war.
+               begin
+                SZ:=1;  //Zug legal
+                ImSG[(PosYZiel + 1),(PosXStart + 1)].Enabled:=false;  //Leeren des Feldes, wo der geschlagene Stein ist
+                ImSG[(PosYZiel + 1),(PosXStart + 1)].Visible:=false;  //Siehe oben
+                ImSG[(PosYZiel + 1),(PosXStart + 1)].SendToBack;  //Siehe oben
+                ImSN[(PosYZiel + 1),(PosXStart + 1)].Enabled:=true;  //Siehe oben
+                ImSN[(PosYZiel + 1),(PosXStart + 1)].Visible:=true;  //Siehe oben
+                ImSN[(PosYZiel + 1),(PosXStart + 1)].BringToFront;  //Siehe oben
+               end
+
+```
+...
+Danach kommt die Procedur für das Zurücksetzen des Bretts
+
+```pascal
+{}{}procedure TForm1.Zurücksetzen(Sender: TObject);  //Zurücksetzen des Feldes. genutzt entweder manuell durch das drücken eines Knopfes, (oder ggf. in der Vollversion automatisch nach einem Sieg)
+ begin
+  ImP.Left:=-100;  //Umrandungen werden "entfernt".
+  ImP2.Left:=-100;  //Siehe oben
+{}{}  k := 1;  //k bestimmt in der folgenden Sequenz, wann ein Spielstein "entfernt" wird, da nicht auf allen Feldern (nicht auf den weisen) ein Spielstein generiert wurde (Siehe Zeile X)
+  for i := 1 to 8 do
    begin
-    //Alten Stein unsichtbar machen. Oberfläche vorbereiten, falls in der Zukunft ein anderer Stein auf das selbe Feld gezogen wird.
-    ImSR[PosYStart,PosXStart].Visible:=false;
-    ImSR[PosYStart,PosXStart].Enabled:=false;
-    ImSR[PosYStart,PosXStart].SendToBack;
-    ImSN[PosYStart,PosXStart].Visible:=true;
-    ImSN[PosYStart,PosXStart].Enabled:=true;
-    ImSN[PosYStart,PosXStart].BringToFront;
+    for j := 1 to 8 do
+     begin
+      if k = -1 then  //Spielsteine werden nur auf jedem zweiten Feld erstellt. Siehe Zeile X.
+       begin
+        ImSR[i,j].Visible:=false;  //Spielsteine werden zurück gesetzt...
+        ImSR[i,j].Enabled:=false;
+        ImSR[i,j].SendToBack;
+        if i >= 6 then  //Sichtbar in den Reihen 6, 7 und 8.
+         begin
+          ImSR[i,j].Visible:=true;
+          ImSR[i,j].Enabled:=true;
+          ImSR[i,j].BringToFront;
+         end;
 
-    //Neuen Stein schtbar machen.
-    ImSR[PosYZiel,PosXZiel].Visible:=true;
-    ImSR[PosYZiel,PosXZiel].Enabled:=true;
-    ImSR[PosYZiel,PosXZiel].BringToFront;
-    ImSN[PosYZiel,PosXZiel].Visible:=false;
-    ImSN[PosYZiel,PosXZiel].Enabled:=false;
-    ImSN[PosYZiel,PosXZiel].SendToBack;
-   end
+{}{}        ImSG[i,j].Visible:=false;  //Siehe oben (Zeile X)
+        ImSG[i,j].Enabled:=false;
+        ImSG[i,j].SendToBack;
+        if i <= 3 then
+         begin
+          ImSG[i,j].Visible:=true;
+          ImSG[i,j].Enabled:=true;
+          ImSG[i,j].BringToFront;
+         end;
 
-  else  //Wenn Gelb zieht. Gleich wie oben.
-  ...
-//Korrektur Sichtbarkeit der Umrandungen.
-  ImP.BringToFront;
-  ImP2.BringToFront;
+        //Alle Damen werden "entfernt"
+        ImSRD[i,j].Visible:=false;
+        ImSRD[i,j].Enabled:=false;
+        ImSRD[i,j].SendToBack;
+        ImSGD[i,j].Visible:=false;
+        ImSGD[i,j].Enabled:=false;
+        ImSGD[i,j].SendToBack;
 
-  WaZ:=WaZ*-1;  //Wer auch immer dran war, jetzt ist der andere dran. Wer dran ist wird über die Variable "WaZ"(WerAmZug) bestimmt. Deswegen wird sie hier umgekehrt.
-  AZA:=1;  //Korrektur Zustandsvariable.
+        //Zurücksetzen der Clickbaren leeren Felder
+        ImSN[i,j].Visible:=false;
+        ImSN[i,j].Enabled:=false;
+        ImSN[i,j].SendToBack;
+        if i > 3 then
+         begin
+          if i < 6 then
+           begin
+            ImSN[i,j].Visible:=true;
+            ImSN[i,j].Enabled:=true;
+            ImSN[i,j].BringToFront;
+           end;
+         end;
+       end;
+
+      ImH[i,j].SendToBack;  //Damit das Spielfeld im Hintergrund ist.
+
+      //Korrekter Zustand k Variable (bestimmt wo/wann die Spielsteine erstellt werden).
+      k:=k*-1;  //Siehe oben
+     end;
+    k:=k*-1;  //Siehe oben
+   end;
+  AzA:=1;  //Der erste Zug beginnt mit dem auswählen eines Steines
+  WaZ:=1;  //Rot ist am Anfang am Zug
+  ImP.BringToFront;  //Damit die Pointer im Vordergrund sind.
+  ImP2.BringToFront;  //Siehe oben
  end;
 
-end.  //Ende. (-:
+
+
+end.  //Ende. (-:[>
 ```
+
+
+
 >[!IMPORTANT]
 >Folgende Sachen kommen noch :
->1. Überprüfung ob der Zug legal ist.
->2. Schlagen.
->3. Zurücksetzen de Spielbrettes.
->4. Tastaturabfrage?
->5. Deko
->6. ggf. Schaltert zum Auswählen des Spielmodus.
->7. ...
+>1. Deko
+>2. ggf. Schaltert zum Auswählen des Spielmodus.
+>3. Möglichkeit gegen ein KI zu SPielen
+>4. ...

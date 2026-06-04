@@ -41,7 +41,7 @@
   object WaZLabel: TLabel
     Left = 800
     Top = 512
-    Width = 161
+    Width = 177
     Height = 27
     AutoSize = False
     Caption = 'Rot ist am Zug'
