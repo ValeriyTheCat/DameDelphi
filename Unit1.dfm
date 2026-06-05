@@ -52,22 +52,13 @@
     Font.Style = [fsBold, fsItalic]
     ParentFont = False
   end
-  object ButtonDebug: TButton
-    Left = 120
-    Top = 480
-    Width = 75
-    Height = 25
-    Caption = 'ButtonDebug'
-    TabOrder = 0
-    OnClick = ButtonDebugClick
-  end
   object KnZurücksetzen: TButton
     Left = 552
     Top = 512
     Width = 75
     Height = 27
     Caption = 'Zur'#252'cksetzen'
-    TabOrder = 1
+    TabOrder = 0
     OnClick = KnZurücksetzenClick
   end
 end

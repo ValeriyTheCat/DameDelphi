@@ -6,23 +6,24 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls;
 
+//Notizen:
+//Der gesamte Code ist kommentiert. Es wurde zum recherchieren teilweise das Forum auf der Website "StackOverflow" benutzt. Der Code wurde vollständig von Valerii Zayko, und Jonas Klein geschrieben.
+//Unsere Version von Dame ist für das "english standard ruleset", und nicht für das "english tournament ruleset" ausgelegt. Das heißt, dass Damen nur jeweils ein Feld rückwärts gehen können (Schlagen ausgenommen), und dass wenn ein Stein am Ende des Brettes zu einer Dame wird, der Zug beendet ist, auch wenn man die Möglichkeit zum "Ketten-Fangen" hätte.
+//Und nun, der Code:
+
 type
     TForm1 = class(TForm)  //Form
-    LabelTitel: TLabel;  //Titel "Dame"
-    LabelTitel2: TLabel;  //Untertitel "von Jonas und Valerii"
-    ButtonDebug: TButton;
-    WaZLabel: TLabel;
-    KnZurücksetzen: TButton; //Debug-Knopf, später löschen!!!
-    {}{}procedure FormCreate(Sender: TObject);  //Zeile X-X; Wird beim starten des Programms ausgeführt.
-    {}{}procedure ButtonDebugClick(Sender: TObject);  //Zeile X-X
-    {}{}procedure ClickHandlerRot(Sender: TObject);  //Zeile X-X; Zug von Spieler Rot
-    {}{}procedure ClickHandlerGelb(Sender: TObject);  //Zeile X-X; Zug von Spieler Gelb
-    {}{}procedure ClickHandlerRotDame(Sender: TObject);  //Zeile X-X; Zug von Spieler  bei Dame
-    {}{}procedure ClickHandlerGelbDame(Sender: TObject);  //Zeile X-X; Zug von Spieler Gelb bei Dame
-    {}{}procedure Feldauswahl1(Sender: TObject);  //Zeile X-X; Ändert Zustand der Variablen PosXStart und PosYStart je nach Situation.
-    {}{}procedure ClickHandlerElse(Sender: TObject);  //Zeile X-X; Ausführen eines Zuges (Experimentell)
-    {}{}procedure Zurücksetzen(Sender: TObject);
-    {}{}procedure KnZurücksetzenClick(Sender: TObject);  //Zeile X-X; Zurücksetzen von allem
+    LabelTitel,LabelTitel2,WaZLabel: TLabel;  //Titel und Untertitel, sowie Anzeige wer am Zug ist.
+    KnZurücksetzen: TButton; //Führt nach einer Abfrage die Prozedur "Zurücksetzen" aus.
+    procedure FormCreate(Sender: TObject);  //Zeile 46-268; Wird beim starten des Programms ausgeführt.
+    procedure ClickHandlerRot(Sender: TObject);  //Zeile 333-364; Zug von Spieler Rot
+    procedure ClickHandlerGelb(Sender: TObject);  //Zeile 368-399; Zug von Spieler Gelb
+    procedure ClickHandlerRotDame(Sender: TObject);  //Zeile 403-434; Zug von Spieler  bei Dame
+    procedure ClickHandlerGelbDame(Sender: TObject);  //Zeile 438-469; Zug von Spieler Gelb bei Dame
+    procedure Feldauswahl1(Sender: TObject);  //Zeile 282-329; Ändert Zustand der Variablen PosXStart und PosYStart je nach Situation.
+    procedure ClickHandlerElse(Sender: TObject);  //Zeile 473-1802; Ausführen eines Zuges (Experimentell)
+    procedure Zurücksetzen(Sender: TObject);  //Zeile 1806-1876; Setzt das Feld und alle wichtigen Variablen auf den Ausgangszustand zurück. Entweder nach Wunsch oder bei Spielende.
+    procedure KnZurücksetzenClick(Sender: TObject);  //Zeile 272-278; Zurücksetzen von allem
 
 private
  {Private-Deklarationen}
@@ -34,37 +35,27 @@ var  //Globale Variablen
  Form1: TForm1;  //Form
  ImH,ImSR,ImSG,ImSRD,ImSGD,ImSN:array [1..8,1..8] of TImage;  //ImH(ImageHintergrund) ist das Spielfeld, ImSR(ImageSpielsteinRot) und ImSG(ImageSpielsteinGelb) sind die standard Spielsteine. ImSRD/ImSGD (ImageSpielstein[Farbe]Dame) sind die umgewandelten Spielsteine. ImSN(ImageSpielsteinNichts) wird als klickbare Oberfläche zum ziehen von Spielsteinen verwendet.
  ImP,ImP2: TImage;  //ImP(ImagePointer ist das blaue Rechteck, was wir als Umrandung benutzen.
- i,j,k,l,m,MPosX,MPosY,PosXStart,PosYStart,PosXZiel,PosYZiel,WaZ,AZA,SZ,DZ,Schlag: Integer;  //i,j,k,l und m werden als flexible Variablen für Schleifen, oder als kurzzeitiger Speicher genutzt. MPosX(MausPositionX) und MPosY(MausPositionY) werden zum zwischenspeichern der Mausposition auf der X und Y Achse genutzt (X=.Left,Y=.Top). Die Variablen PosXStart(PositionXStart), PosYStart(PositionYStart), PosXZiel(PositionXZiel) und PosYZiel(PositionYZiel) werden beim bewegen der Steine als Speicher genutzt, sie bestimmen welcher Stein (PosXStart und PosYStart) wohin (PosXZiel,PosYZiel) gezogen werden soll. WaZ(WerAmZug) hat nur die zwei Zustände 1 und -1, und wird als Zwischensspeicher im Auswahl-Prozess verwendet. AZA(AuswahlZugAuswahl) bestimmt den Zeitpunkt des Zugprozesses, beim ersten Klick ist AZA = 1, beim zweiten ist AZA = -1. Sz(Szenario) wird ab und zu als flexible Variable genutzt. DZ(DamenZug)wird genutz, um zu bestimmen welche Art von Spielstein Am Zug ist.
+ i,j,k,l,m,MPosX,MPosY,PosXStart,PosYStart,PosXZiel,PosYZiel,WaZ,AZA,SZ,DZ,Schlag,KettenSchlag: Integer;  //i,j,k,l und m werden als flexible Variablen für Schleifen, oder als kurzzeitiger Speicher genutzt. MPosX(MausPositionX) und MPosY(MausPositionY) werden zum zwischenspeichern der Mausposition auf der X und Y Achse genutzt (X=.Left,Y=.Top). Die Variablen PosXStart(PositionXStart), PosYStart(PositionYStart), PosXZiel(PositionXZiel) und PosYZiel(PositionYZiel) werden beim bewegen der Steine als Speicher genutzt, sie bestimmen welcher Stein (PosXStart und PosYStart) wohin (PosXZiel,PosYZiel) gezogen werden soll. WaZ(WerAmZug) hat nur die zwei Zustände 1 und -1, und wird als Zwischensspeicher im Auswahl-Prozess verwendet. AZA(AuswahlZugAuswahl) bestimmt den Zeitpunkt des Zugprozesses, beim ersten Klick ist AZA = 1, beim zweiten ist AZA = -1. Sz(Szenario) wird ab und zu als flexible Variable genutzt. DZ(DamenZug)wird genutz, um zu bestimmen welche Art von Spielstein Am Zug ist. Schlag ist dann eins, wenn ein Stein geschlagen wurde und wird die Überprüfung für das Ketten-Schlagen aktivieren. KettenSchlag ist dann 1, wenn eine Möglichkeiten eines Ketten-Schlages besteht.
  MPos: TPoint;  //MPos(MausPosition) wird genutzt um die Mausposition zwischen zu speichern.
-
- //x: extended;
 
 implementation
 {$R *.dfm}
-//Wenn irgendwo ein {}//{} vorsteht, muss/könnte man an der jeweiligen Zeile noch arbeiten.
-//Wenn irgendwo ein {}{} vorsteht, muss am Ende dort noch die Zeilenangabe eingetragen werden.
-
-procedure TForm1.ButtonDebugClick(Sender: TObject); //Debug Knopf zum testen
- begin
-  //ShowMessage('Debug: Debug');
-  //ShowMessage(FloatToStr(x));
-  //ShowMessage(IntToStr(l)) ;
- end;
 
 
 
 procedure TForm1.FormCreate(Sender: TObject);  //Wird beim starten des Programms ausgeführt
  begin
-  //WaZLabel.Left:=5;
-  //WaZLabel.Top:=500;
-  //KnZurücksetzen.Left:=50;
-  //KnZurücksetzen.Top:=550;
+  WaZLabel.Left:=5;         //Startposition der Benutzer Oberfläche
+  WaZLabel.Top:=500;        //Startposition der Benutzer Oberfläche
+  KnZurücksetzen.Left:=50;  //Startposition der Benutzer Oberfläche
+  KnZurücksetzen.Top:=550;  //Startposition der Benutzer Oberfläche
   AZA:=1;  //Wichtig für später.
   WaZ:=1;  //Rot wird zuerst ziehen.
+  KettenSchlag:=0;  //Das Spiel hat noch nicht begonnen, es kann noch gar keine Möglichkeit zum "Ketten-Fangen" geben.
   k := 1;  //Hier: k bestimmt, wann Spielsteine gneriert werden und wann ein Hintergrund-Feld Braun bzw. Weiss ist.
   for i := 1 to 8 do  //Schleife zum Erstellen aller Felder/Spielsteine
    begin
- {}{}   for j := 1 to 8 do  //Siehe Zeile X
+    for j := 1 to 8 do  //Siehe Zeile 56
      begin
       //Spielfeld Erstellen 1
       ImH[i,j]:=TImage.Create(Self);  //Erstellen
@@ -79,7 +70,7 @@ procedure TForm1.FormCreate(Sender: TObject);  //Wird beim starten des Programms
       ImH[i,j].Canvas.Brush.Style := bssolid;  //Hintergrund besteht aus AUSGEFÜLLTEN(bssolid) Rechtecken
 
       //Spielsteine Erstellen
-{}{}      if k = -1 then  //Spielsteine werden nur aúf jedem zweiten Feld erstellt. Siehe Zeile X.
+      if k = -1 then  //Spielsteine werden nur aúf jedem zweiten Feld erstellt. Siehe Zeile 55.
        begin
         //Spielsteine Rot
         ImSR[i,j]:=TImage.Create(Self);  //Erstellen
@@ -95,22 +86,22 @@ procedure TForm1.FormCreate(Sender: TObject);  //Wird beim starten des Programms
 
         //Spielsteine Rot erstellen: Generell 1
         ImSR[i,j].Canvas.Brush.Style := bssolid;  //"Stil"
-        //Spielsteine Rot: Hintergrund
+        //Spielsteine Rot erstellen: Hintergrund
         ImSR[i,j].Canvas.Brush.Color := clMaroon;  //Farbe Hintergrund
         ImSR[i,j].Canvas.Rectangle(1,1,50,50);  //Erstellen des Hintergrunds
         //Spielsteine Rot erstellen: Steine
         ImSR[i,j].Canvas.Brush.Color := clRed;  //Farbe Steine
         if i >= 6 then  //Am Start sollen nur die Steine in den Reihen 6, 7 und 8 sichtbar/bewegbar seien.
          begin
- {}{}         ImSR[i,j].Visible:=true;  //Siehe Zeile X
- {}{}         ImSR[i,j].Enabled:=true;  //Siehe Zeile X
+          ImSR[i,j].Visible:=true;  //Siehe Zeile 94
+          ImSR[i,j].Enabled:=true;  //Siehe Zeile 94
          end;
         //Spielsteine Rot erstellen: Generell 2
         ImSR[i,j].Canvas.Ellipse(5,5,46,46);  //Erstellen der Steine
         ImSR[i,j].BringToFront;  //Damit die Spielsteine im Vordergrund sind.
-{}{}        ImSR[i,j].OnClick:=ClickHandlerRot;  //Auswahlprozess, siehe Zeile X.
+        ImSR[i,j].OnClick:=ClickHandlerRot;  //Auswahlprozess, siehe Zeile 333.
 
-{}{}        //Spielsteine Gelb: Für Erklärung Siehe Oben "Spielsteine Rot", Zeile X-X.
+        //Spielsteine Gelb: Für Erklärung Siehe Oben "Spielsteine Rot", Zeile 75-102.
         ImSG[i,j]:=TImage.Create(Self);
         ImSG[i,j].Parent := Self;
         ImSG[i,j].Left:=500+50*j;
@@ -128,12 +119,12 @@ procedure TForm1.FormCreate(Sender: TObject);  //Wird beim starten des Programms
         ImSG[i,j].Canvas.Brush.Color:=clYellow;
         if i <= 3 then  //Am Start sollen nur die Steine in den Reihen 1, 2 und 3 sichtbar/bewegbar seien.
          begin
-{}{}          ImSG[i,j].Visible:=true;  //Siehe Zeile X
-{}{}          ImSG[i,j].Enabled:=true;  //Siehe Zeile X
+          ImSG[i,j].Visible:=true;  //Siehe Zeile 120
+          ImSG[i,j].Enabled:=true;  //Siehe Zeile 120
          end;
         ImSG[i,j].Canvas.Ellipse(5,5,46,46);
         ImSG[i,j].BringToFront;
-{}{}        ImSG[i,j].OnClick:=ClickHandlerGelb;  //Auswahlprozess, siehe Zeile X
+        ImSG[i,j].OnClick:=ClickHandlerGelb;  //Auswahlprozess, siehe Zeile 368.
 
 
         //Das gleiche noch zweimal für die Spielsteine als Dame
@@ -156,7 +147,7 @@ procedure TForm1.FormCreate(Sender: TObject);  //Wird beim starten des Programms
         ImSRD[i,j].Canvas.Ellipse(5,5,46,46);
         ImSRD[i,j].Canvas.Rectangle(20,20,31,31);
         ImSRD[i,j].SendToBack;
-{}{}        ImSRD[i,j].OnClick:=ClickHandlerRotDame;  //Auswahlprozess, siehe Zeile X
+        ImSRD[i,j].OnClick:=ClickHandlerRotDame;  //Auswahlprozess, siehe Zeile 403.
 
         //Gelbe Damen
         ImSGD[i,j]:=TImage.Create(Self);
@@ -177,21 +168,20 @@ procedure TForm1.FormCreate(Sender: TObject);  //Wird beim starten des Programms
         ImSGD[i,j].Canvas.Ellipse(5,5,46,46);
         ImSGD[i,j].Canvas.Rectangle(20,20,31,31);
         ImSGD[i,j].SendToBack;
-{}{}        ImSGD[i,j].OnClick:=ClickHandlerGelbDame;  //Auswahlprozess, siehe Zeile X
+        ImSGD[i,j].OnClick:=ClickHandlerGelbDame;  //Auswahlprozess, siehe Zeile 438.
 
 
-
-        //Oberfläche zum Ziehen erstellen
-        ImSN[i,j]:=TImage.Create(Self);  //
-        ImSN[i,j].Parent := Self;  //
-        ImSN[i,j].Left:=500+50*j;  //
-        ImSN[i,j].Top:=50+50*i;  //
-        ImSN[i,j].Width:=50;  //
-        ImSN[i,j].Height:=50;  //
-        ImSN[i,j].AutoSize:=false;  //
-        ImSN[i,j].Visible:=false;  //
-        ImSN[i,j].Enabled:=false;  //
-        ImSN[i,j].Transparent:=true;  //
+        //Oberfläche zum Ziehen erstellen. Nahezu gleich wie oben bei den Spielsteinen.
+        ImSN[i,j]:=TImage.Create(Self);
+        ImSN[i,j].Parent := Self;
+        ImSN[i,j].Left:=500+50*j;
+        ImSN[i,j].Top:=50+50*i;
+        ImSN[i,j].Width:=50;
+        ImSN[i,j].Height:=50;
+        ImSN[i,j].AutoSize:=false;
+        ImSN[i,j].Visible:=false;
+        ImSN[i,j].Enabled:=false;
+        ImSN[i,j].Transparent:=true;
         ImSN[i,j].Canvas.Brush.Style:=bssolid;  //Sieht aus wie ein leeres Feld.
         ImSN[i,j].Canvas.Brush.Color:=clMaroon;  //Siehe oben
         ImSN[i,j].Canvas.Rectangle(1,1,50,50);  //Siehe oben
@@ -199,23 +189,23 @@ procedure TForm1.FormCreate(Sender: TObject);  //Wird beim starten des Programms
          begin
           if i < 6 then
            begin
-{}{}          ImSN[i,j].Visible:=true;  //Siehe Zeile X
-{}{}          ImSN[i,j].Enabled:=true;  //Siehe Zeile X
-              ImSN[i,j].BringToFront;   //Siehe Zeile X
+            ImSN[i,j].Visible:=true;  //Siehe Zeile 188
+            ImSN[i,j].Enabled:=true;  //Siehe Zeile 188
+            ImSN[i,j].BringToFront;   //Siehe Zeile 188
            end;
          end;
-{}{}        ImSN[i,j].OnClick:=ClickHandlerElse;  //Auswahlprozess, siehe Zeile X
+        ImSN[i,j].OnClick:=ClickHandlerElse;  //Auswahlprozess, siehe Zeile 473.
 
-{}{}       end;  //Bezogen auf: Spielsteine erstellen, Start bei Zeile X
+       end;  //Bezogen auf: Spielsteine erstellen, Start bei Zeile 72.
 
       //Spielfeld erstellen 2
       if k = -1 then //Bestimmt wann das Spielfeld mit weißer/brauner Farbe erstellt wird, siehe Zeile 48.
        begin
-{}{}        ImH[i,j].Canvas.Brush.Color:=clMaroon;  //Farbe, siehe oben, Zeile X.
+        ImH[i,j].Canvas.Brush.Color:=clMaroon;  //Farbe, siehe oben, Zeile 202.
        end
-{}{}      else  //Bezug auf Zeile X.
+      else
        begin
-{}{}        ImH[i,j].Canvas.Brush.Color:=clCream;  //Farbe, siehe oben, Zeile X.
+        ImH[i,j].Canvas.Brush.Color:=clCream;  //Farbe, siehe oben, Zeile 202.
        end;
       ImH[i,j].Canvas.Rectangle(1,1,50,50);  //Erstellen
       ImH[i,j].SendToBack;  //Damit das Spielfeld im Hintergrund ist.
@@ -227,7 +217,7 @@ procedure TForm1.FormCreate(Sender: TObject);  //Wird beim starten des Programms
    end;
 
 
-  //Highlights zum feld auswählen erstellen
+  //Umrandungen erstellen (als dekorative Details bei der Auswahl von Feldern).
   ImP:=TImage.Create(Self);  //Erstellen
   ImP.Parent:=Self;  //Erstellen
   ImP.Width:=51;  //Größe
@@ -239,57 +229,52 @@ procedure TForm1.FormCreate(Sender: TObject);  //Wird beim starten des Programms
   //Bitmap erstellen
   ImP.Picture.Bitmap:=TBitmap.Create;  //Erstellen
   ImP.Picture.Bitmap.PixelFormat:=pf32bit;  //Format 32 damit man trasnsparente Pixel erstellen kann. --> Gefunden durch Recherche
-{}{}  ImP.Picture.Bitmap.SetSize(ImP.Width,ImP.Height);  //Bitmap Größe der Image Größe (Zeile X-X) gleichsetzen.
+  ImP.Picture.Bitmap.SetSize(ImP.Width,ImP.Height);  //Bitmap Größe der Image Größe (Zeile 226-227) gleichsetzen.
   ImP.Picture.Bitmap.Canvas.FillRect(Rect(0,0,ImP.Width,ImP.Height)); //Rechteck auf der Bitmap erstellen.
   ImP.Picture.Bitmap.Transparent := True;  //Sorgt dafür, dass man weiterhin das Spielfeld sehen
   with ImP.Picture.Bitmap.Canvas do  //Eigenschaften der Bitmap deklarieren
    begin
-    Pen.Color := clBlue; //Farbe
-    Pen.Width := 2; //Wie breit die Umrandung ist, 2 sieht schön aus.
-    Brush.Style := bsClear; //Nur Umrandung (des Rechtecks), bei "bssolid" wäre das ganze Feld bedeckt.
-    Rectangle(1, 1, ImP.Width - 1, ImP.Height - 1); //Rechteck erstellen. "ImP.Widtht - 1"/"ImP.Height - 1" sorgen dafür, dass die Ecke des Rechtecks auf dem letzten sichtbaren Pixel ist.
+    Pen.Color := clBlue;  //Farbe
+    Pen.Width := 2;  //Wie breit die Umrandung ist, 2 sieht schön aus.
+    Brush.Style := bsClear;  //Nur Umrandung (des Rechtecks), bei "bssolid" wäre das ganze Feld bedeckt.
+    Rectangle(1, 1, ImP.Width - 1, ImP.Height - 1);  //Rechteck erstellen. "ImP.Widtht - 1"/"ImP.Height - 1" sorgen dafür, dass die Ecke des Rechtecks auf dem letzten sichtbaren Pixel ist.
    end;
   ImP.BringToFront;  //Sorgt dafür, dass man die Umrandung auch sehen kann (bringt die Umrandung in den Vordergrund).
 
-  //Zweites Highlight
-  ImP2:=TImage.Create(Self);  //Erstellen
-  ImP2.Parent:=Self;  //Erstellen
-  ImP2.Width:=51;  //Größe
-  ImP2.Height:=51;  //Größe
-  ImP2.AutoSize:=False;  //Größe
-  ImP2.Left:=-100;  //Start-Position
-  ImP2.Top:=100;  //Start-Position
-  ImP2.Transparent:=True;  //Sorgt dafür, dass man weiterhin das Spielfeld sehen kann.
+  //Zweite Umrandung, wie oben. Nur diesmal in grün :)
+  ImP2:=TImage.Create(Self);
+  ImP2.Parent:=Self;
+  ImP2.Width:=51;
+  ImP2.Height:=51;
+  ImP2.AutoSize:=False;
+  ImP2.Left:=-100;
+  ImP2.Top:=100;
+  ImP2.Transparent:=True;
   //Bitmap erstellen
-  ImP2.Picture.Bitmap:=TBitmap.Create;  //Erstellen
-  ImP2.Picture.Bitmap.PixelFormat:=pf32bit;  //Format 32 damit man trasnsparente Pixel erstellen kann. --> Gefunden durch Recherche
-  ImP2.Picture.Bitmap.SetSize(ImP2.Width,ImP2.Height);  //Bitmap Größe der Image Größe gleichsetzen.
-  ImP2.Picture.Bitmap.Canvas.FillRect(Rect(0,0,ImP2.Width,ImP2.Height)); //Rechteck auf der Bitmap erstellen.
-  ImP2.Picture.Bitmap.Transparent := True;  //Sorgt dafür, dass man weiterhin das Spielfeld sehen
-  with ImP2.Picture.Bitmap.Canvas do  //Eigenschaften der Bitmap deklarieren
+  ImP2.Picture.Bitmap:=TBitmap.Create;
+  ImP2.Picture.Bitmap.PixelFormat:=pf32bit;
+  ImP2.Picture.Bitmap.SetSize(ImP2.Width,ImP2.Height);
+  ImP2.Picture.Bitmap.Canvas.FillRect(Rect(0,0,ImP2.Width,ImP2.Height));
+  ImP2.Picture.Bitmap.Transparent := True;
+  with ImP2.Picture.Bitmap.Canvas do
    begin
-    Pen.Color := clgreen; //Farbe
-    Pen.Width := 2; //Wie breit die Umrandung ist, 2 sieht schön aus.
-    Brush.Style := bsClear; //Nur Umrandung (des Rechtecks), bei "bssolid" wäre das ganze Feld bedeckt.
-    Rectangle(1, 1, ImP2.Width - 1, ImP2.Height - 1); //Rechteck erstellen. "ImP.Widtht - 1"/"ImP.Height - 1" sorgen dafür, dass die Ecke des Rechtecks auf dem letzten sichtbaren Pixel ist.
+    Pen.Color := clgreen; //Farbe ist jetzt grün.
+    Pen.Width := 2;
+    Brush.Style := bsClear;
+    Rectangle(1, 1, ImP2.Width - 1, ImP2.Height - 1);
    end;
-  ImP2.BringToFront;  //Sorgt dafür, dass man die Umrandung auch sehen kann (bringt die Umrandung in den Vordergrund).
+  ImP2.BringToFront;
 
-  //WaZLabel.Left:=5;
-  //WaZLabel.Top:=500;
-  //KnZurücksetzen.Left:=50;
-  //KnZurücksetzen.Top:=550;
-
- end;  //Ende der Prozedur. Start in Zeile X.
+ end;
 
 
 
-procedure TForm1.KnZurücksetzenClick(Sender: TObject);
+procedure TForm1.KnZurücksetzenClick(Sender: TObject);  //Fragt ab, und führt ggf. die Prozedur "Zurücksetzen" aus.
  begin
-  if MessageDlg('Willst du das Feld Zurücksetzen?', mtConfirmation, [mbYes, mbNo], 0) = mrYes then
-  begin
-    Zurücksetzen(Self);
-  end;
+  if MessageDlg('Willst du das Feld Zurücksetzen?', mtConfirmation, [mbYes, mbNo], 0) = mrYes then  //Fragt ab, ob das Spiel wirklich zurückgesetzt werden soll.
+   begin
+    Zurücksetzen(Self);  //Setzt das Feld, sowie manche Variablen zurück. Siehe Zeile 1806.
+   end;
  end;
 
 
@@ -298,11 +283,11 @@ procedure TForm1.Feldauswahl1(Sender: TObject);  //Ändert Zustand der Variablen 
  begin
   GetCursorPos(MPos);  //Speichert die aktuelle Mausposition.
   MPos := Form1.ScreenToClient(MPos);  //Sorgt dafür, das die Position realativ zum Fenster (also im selben "Koordinatensystem" wie die Komponenten) gespeichert wird.
-  MPosX := MPos.X - ImP.Width div 2;  //Nicht benötigt. Sorgt halt einfach dafür, dass die angegebene Position etwas verschoben ist. Wenn man jetzt in die Mitte klickt kommen ca. die Koordinaten von .Left und .Top des angeklickten Feldes raus. "div 2" = "/2", aber das Ergebnis ist automatisch gerundet.
+  MPosX := MPos.X - ImP.Width div 2;  //Nicht unbedingt benötigt, macht es aber einfacher für später. Sorgt dafür, dass die angegebene Position etwas verschoben ist. Wenn man jetzt in die Mitte klickt kommen ca. die Koordinaten von .Left und .Top des angeklickten Feldes raus. "div 2" = "/2", aber das Ergebnis ist automatisch gerundet.
   MPosY  := MPos.Y - ImP.Height div 2;  //Siehe oben.
 
   //Setze PosXStart
-  i:=0;  //Reset für Schleife
+  i:=0;  //Reset für Schleife.
   PosXStart:=-1;  //Darf nicht i seien, muss unter 0 oder über 7 seien.
   k:=475;  //StartPosition1 zum Überprüfen - 50
   l:=525;  //StartPosition2 zum Überprüfen - 50
@@ -321,11 +306,11 @@ procedure TForm1.Feldauswahl1(Sender: TObject);  //Ändert Zustand der Variablen 
      end;
    end;
 
-  //Setze PosYStart
-  i:=0;  //Reset für Schleife
-  PosYStart:=-1;  //Darf nicht i seien, muss unter 0 oder über 7 seien.
-  k:=25;  //StartPosition1 zum Überprüfen - 50
-  l:=75;  //StartPosition2 zum Überprüfen - 50
+  //Setze PosYStart. Nahezu gleich wie oben.
+  i:=0;
+  PosYStart:=-1;
+  k:=25;
+  l:=75;
   while PosYStart <> i do
    begin
     k:=k+50;  //zu überprüfende Position
@@ -345,113 +330,141 @@ procedure TForm1.Feldauswahl1(Sender: TObject);  //Ändert Zustand der Variablen 
 
 
 
-{}{}procedure TForm1.ClickHandlerRot(Sender: TObject);  //Genutzt in Zeile X
+procedure TForm1.ClickHandlerRot(Sender: TObject);  //Genutzt in Zeile 102.
  begin
-  if WaZ = 1 then  //Wird nur ausgeführt wenn Rot auch am Zug ist.
+  if KettenSchlag = 0 then  //Wenn es kein Kettenschlag ist.
    begin
-    if AZA = 1 then  //Wird nur ausgefüht, wenn zuvor noch kein Stein ausgewählt wurde.
+    if WaZ = 1 then  //Wird nur ausgeführt wenn Rot auch am Zug ist.
      begin
-{}{}      Feldauswahl1(Self);  //Wählt Feld aus. Siehe Zeile X.
-      DZ:=-1;  //Es zieht keine Dame
+      if AZA = 1 then  //Wird nur ausgefüht, wenn zuvor noch kein Stein ausgewählt wurde.
+       begin
+        Feldauswahl1(Self);  //Wählt Feld aus. Siehe Zeile 282.
+        DZ:=-1;  //Es zieht keine Dame
+       end
+      else
+       begin
+        ShowMessage('Da kannst du nicht hinziehen!');  //Wenn bereits ein Stein ausgewählt wurde, kann kein neuer ausgewählt werden. Wenn dieser Fall eintritt, versucht der Nutzer einen Stein auf einen anderen Stein zu ziehen, was nicht geht.
+        ImP.Left:=-100;  //In dem oben genannten Fall werden Pointer weggenommen.
+        ImP2.Left:=-100;  //S.o.
+       end;
+      AZA:=AZA*-1;  //Zustandsvariable wird korrigiert.
      end
     else
      begin
-      ShowMessage('Da kannst du nicht hinziehen!');  //Wenn bereits ein Stein ausgewählt wurde, kann kein neuer ausgewählt werden. Wenn dieser Fall eintritt, versucht der Nutzer einen Stein auf einen anderen Stein zu ziehen, was nicht geht.
-      ImP.Left:=-100;  //In dem oben genannten Fall werden Pointer weggenommen.
-      ImP2.Left:=-100;  //
+      ShowMessage('Illegaler Zug!');  //"else" bezieht sich auf Zeile 337. Wird ausgeführt wenn Rot nicht am Zug ist.
+      AZA:=1;  //Fehlervorbeugung.
+      ImP.Left:=-100;  //Da der Zug abgebrochen wurde, werden die Pointer "entfernt".
+      ImP2.Left:=-100;  //S.o.
      end;
-{}{}    AZA:=AZA*-1;  //Stein wurde ausgewählt. Jetzt darf die Prozedur "Feldauswahl2" in Zeile X ausgeführt werden.
    end
   else
    begin
-{}{}    ShowMessage('Illegaler Zug!');  //"else" bezieht sich auf Zeile X. Wird ausgeführt wenn Rot nicht am Zug ist.
-    AZA:=1;  //Fehlervorbeugung.
-    ImP.Left:=-100;  //Da der Zug abgebrochen wurde, werden die Pointer "entfernt".
-    ImP2.Left:=-100;
+    ShowMessage('Du musst schlagen');  //Wird bei zwingendem Ketten-Schlagen angezeigt.
    end;
  end;
 
 
 
-{}{}procedure TForm1.ClickHandlerGelb(Sender: TObject);  //Genutzt in Zeile X. Nahezu gleich "ClickHandlerRot", Zeile X.
+procedure TForm1.ClickHandlerGelb(Sender: TObject);  //Genutzt in Zeile 127. Nahezu gleich "ClickHandlerRot", Zeile 333.
  begin
-  if WaZ = -1 then
+  if KettenSchlag = 0 then
    begin
-    if AZA = 1 then
+    if WaZ = -1 then
      begin
-      Feldauswahl1(Self);
-      DZ:=-1;
+      if AZA = 1 then
+       begin
+        Feldauswahl1(Self);
+        DZ:=-1;
+       end
+      else
+       begin
+        ShowMessage('Da kannst du nicht hinziehen!');
+        ImP.Left:=-100;
+        ImP2.Left:=-100;
+       end;
+      AZA:=AZA*-1;
      end
     else
      begin
-      ShowMessage('Da kannst du nicht hinziehen!');
+      ShowMessage('Illegaler Zug!');
+      AZA:=1;
       ImP.Left:=-100;
       ImP2.Left:=-100;
      end;
-    AZA:=AZA*-1;
    end
   else
    begin
-    ShowMessage('Illegaler Zug!');
-    AZA:=1;
-    ImP.Left:=-100;
-    ImP2.Left:=-100;
+    ShowMessage('Du musst schlagen');
    end;
  end;
 
 
 
-{}{}procedure TForm1.ClickHandlerRotDame(Sender: TObject);  //Genutzt in Zeile X. Nahezu gleich "ClickHandlerRot", Zeile X.
+procedure TForm1.ClickHandlerRotDame(Sender: TObject);  //Genutzt in Zeile 150.
  begin
-  if WaZ = 1 then
+  if KettenSchlag = 0 then
    begin
-    if AZA = 1 then
+    if WaZ = 1 then
      begin
-      Feldauswahl1(Self);
-      DZ:=1;
+      if AZA = 1 then
+       begin
+        Feldauswahl1(Self);
+        DZ:=1;
+       end
+      else
+       begin
+        ShowMessage('Da kannst du nicht hinziehen!');
+        ImP.Left:=-100;
+        ImP2.Left:=-100;
+       end;
+      AZA:=AZA*-1;
      end
     else
      begin
-      ShowMessage('Da kannst du nicht hinziehen!');
+      ShowMessage('Illegaler Zug!');
+      AZA:=1;
       ImP.Left:=-100;
       ImP2.Left:=-100;
      end;
-    AZA:=AZA*-1;
    end
   else
    begin
-    ShowMessage('Illegaler Zug!');
-    AZA:=1;
-    ImP.Left:=-100;
-    ImP2.Left:=-100;
+    ShowMessage('Du musst schlagen');
    end;
  end;
 
 
 
-{}{}procedure TForm1.ClickHandlerGelbDame(Sender: TObject);  //Genutzt in Zeile X. Nahezu gleich "ClickHandlerRot", Zeile X.
+procedure TForm1.ClickHandlerGelbDame(Sender: TObject);  //Genutzt in Zeile 171.
  begin
-  if WaZ = -1 then
+  if KettenSchlag = 0 then
    begin
-    if AZA = 1 then
+    if WaZ = -1 then
      begin
-      Feldauswahl1(Self);
-      DZ:=1;
+      if AZA = 1 then
+       begin
+        Feldauswahl1(Self);
+        DZ:=1;
+       end
+      else
+       begin
+        ShowMessage('Da kannst du nicht hinziehen!');
+        ImP.Left:=-100;
+        ImP2.Left:=-100;
+       end;
+      AZA:=AZA*-1;
      end
     else
      begin
-      ShowMessage('Da kannst du nicht hinziehen!');
+      ShowMessage('Illegaler Zug!');
+      AZA:=1;
       ImP.Left:=-100;
       ImP2.Left:=-100;
      end;
-    AZA:=AZA*-1;
    end
   else
    begin
-    ShowMessage('Illegaler Zug!');
-    AZA:=1;
-    ImP.Left:=-100;
-    ImP2.Left:=-100;
+    ShowMessage('Du musst schlagen');
    end;
  end;
 
@@ -459,8 +472,561 @@ procedure TForm1.Feldauswahl1(Sender: TObject);  //Ändert Zustand der Variablen 
 
 procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt eines Zuges ausgeführt, d.h. wenn man ein leeres Feld anklickt, nachdem man einen Stein ausgewählt hat.
  begin
-  if AZA = -1 then  //Bedingung, siehe oben
+  if KettenSchlag = 0 then  //Es wird bei einem Ketten-Schlag eine andee Überprüfung bezüglich der Legalität des Zuges verwendet.
    begin
+    if AZA = -1 then  //Bedingung, siehe oben, Zeile 473.
+     begin
+      GetCursorPos(MPos);  //Speichert die aktuelle Mausposition.
+      MPos := Form1.ScreenToClient(MPos);  //Sorgt dafür, das die Position realativ zum Fenster (also im selben "Koordinatensystem" wie die Komponenten) gespeichert wird.
+      MPosX := MPos.X - ImP2.Width div 2;  //Nicht unbedingt benötigt. Sorgt dafür, dass die angegebene Position etwas verschoben ist. Wenn man jetzt in die Mitte klickt kommen ca. die Koordinaten von .Left und .Top des angeklickten Feldes raus. "div 2" = "/2", aber das Ergebnis ist automatisch gerundet. Macht es einfacher für später.
+      MPosY  := MPos.Y - ImP2.Height div 2;  //Siehe oben.
+
+      //Setze PosXZiel
+      i:=0;  //Reset für Schleife
+      PosXZiel:=-1;  //Darf nicht i seien, muss unter 0 oder über 7 seien.
+      k:=475;  //StartPosition1 zum Überprüfen - 50
+      l:=525;  //StartPosition2 zum Überprüfen - 50
+      while PosXZiel <> i do
+       begin
+        k:=k+50;  //zu überprüfende Position
+        l:=l+50;  //zu überprüfende Position
+        i:=i+1;   //Aktuelle Reihe
+        if MPosX > k then  //PositionTest1
+         begin
+          if MPosX < l then  //PositionTest1
+           begin
+            PosXZiel:=i;  //Beendet Schleife und setzt Position.
+            ImP2.Left:=k+25;  //Setzt die Position vom Pointer.
+           end;
+         end;
+       end;
+
+      //Setze PosYZiel. S.o.
+      i:=0;
+      PosYZiel:=-1;
+      k:=25;  //StartPosition1 zum Überprüfen - 50
+      l:=75;  //StartPosition2 zum Überprüfen - 50
+      while PosYZiel <> i do
+       begin
+        k:=k+50;  //zu überprüfende Position
+        l:=l+50;  //zu überprüfende Position
+        i:=i+1;   //Aktuelle Reihe
+        if MPosY > k then  //PositionTest1
+         begin
+          if MPosY < l then  //PositionTest1
+           begin
+            PosYZiel:=i;  //Beendet Schleife und setzt Position.
+            ImP2.Top:=k+25;  //Setzt die Position vom Pointer.
+           end;
+         end;
+       end;
+
+
+      //Überprüfung ob Zug legal (Für: Normaler Zug, Schlagen, Zug als Dame, Schlage-Dame)
+      SZ:=0;  //Korrekter Start-Zustand. Hier: SZ wird genutzt um festzulegen, ob der Zug legal ist (0=Illegal, 1=legal)
+      k:=0;  //Fehlerprevention. Nur existierende Felder können bearbeitet werden.
+      Schlag:=1;  //Es wird immer geschlagen, es sei denn es ist ein normaler Zug (dann wird Schlag:=0 gesetzt.)
+      //Wenn;
+      if WaZ = 1 then  //rot,
+       begin
+        if DZ = -1 then  //keine Dame,
+         begin
+          if PosYZiel = (PosYStart - 1) then  //einen normaler Zug
+           begin
+            if (PosXZiel - PosXStart)*(-(PosXZiel - PosXStart)) = -1 then  //Nach rechts oder links (Wenn z.B. von X6 nach X5, dann (6-5)*-(6-5)=1*-1=-1, wenn z.B. von X5 nach X6 dann (5-6)*-(5-6)=-1*-(-1)=-1*1=-1)
+             begin
+              SZ:=1;  //Zug ist legal.
+              Schlag:=0;  //Wurde nichts geschlagen.
+             end;
+           end
+          else
+           begin //einen Stein schlägt
+            if PosYZiel = (PosYStart - 2) then  //Überprüfen, ob Zug legal seien könnte
+             begin
+              if PosXZiel = (PosXStart + 2) then  //Schlagen rechts
+               begin
+                if ImSG[(PosYZiel + 1),(PosXStart + 1)].Enabled = true then  //Überprüfung, ob da auch ein Schlagbarer Stein war.
+                 begin
+                  SZ:=1;  //Zug legal
+                  ImSG[(PosYZiel + 1),(PosXStart + 1)].Enabled:=false;  //Leeren des Feldes, wo der geschlagene Stein ist
+                  ImSG[(PosYZiel + 1),(PosXStart + 1)].Visible:=false;  //Siehe oben
+                  ImSG[(PosYZiel + 1),(PosXStart + 1)].SendToBack;  //Siehe oben
+                  ImSN[(PosYZiel + 1),(PosXStart + 1)].Enabled:=true;  //Siehe oben
+                  ImSN[(PosYZiel + 1),(PosXStart + 1)].Visible:=true;  //Siehe oben
+                  ImSN[(PosYZiel + 1),(PosXStart + 1)].BringToFront;  //Siehe oben
+                 end
+                else if ImSGD[(PosYZiel + 1),(PosXStart + 1)].Enabled = true then  //Es kann auch seien, dass eine Dame geschlagen wird.
+                 begin
+                  SZ:=1;
+                  ImSGD[(PosYZiel + 1),(PosXStart + 1)].Enabled:=false;
+                  ImSGD[(PosYZiel + 1),(PosXStart + 1)].Visible:=false;
+                  ImSGD[(PosYZiel + 1),(PosXStart + 1)].SendToBack;
+                  ImSN[(PosYZiel + 1),(PosXStart + 1)].Enabled:=true;
+                  ImSN[(PosYZiel + 1),(PosXStart + 1)].Visible:=true;
+                  ImSN[(PosYZiel + 1),(PosXStart + 1)].BringToFront;
+                 end;
+               end
+              else if PosXZiel = (PosXStart - 2) then  //Siehe oben (Schlagen links, gleich wie schlagen rechts nur Vorzeichen anders)
+               begin
+                if ImSG[(PosYZiel + 1),(PosXStart - 1)].Enabled = true then
+                 begin
+                  SZ:=1;
+                  ImSG[(PosYZiel + 1),(PosXStart - 1)].Enabled:=false;
+                  ImSG[(PosYZiel + 1),(PosXStart - 1)].Visible:=false;
+                  ImSG[(PosYZiel + 1),(PosXStart - 1)].SendToBack;
+                  ImSN[(PosYZiel + 1),(PosXStart - 1)].Enabled:=true;
+                  ImSN[(PosYZiel + 1),(PosXStart - 1)].Visible:=true;
+                  ImSN[(PosYZiel + 1),(PosXStart - 1)].BringToFront;
+                 end
+                else if ImSGD[(PosYZiel + 1),(PosXStart - 1)].Enabled = true then
+                 begin
+                  SZ:=1;
+                  ImSGD[(PosYZiel + 1),(PosXStart - 1)].Enabled:=false;
+                  ImSGD[(PosYZiel + 1),(PosXStart - 1)].Visible:=false;
+                  ImSGD[(PosYZiel + 1),(PosXStart - 1)].SendToBack;
+                  ImSN[(PosYZiel + 1),(PosXStart - 1)].Enabled:=true;
+                  ImSN[(PosYZiel + 1),(PosXStart - 1)].Visible:=true;
+                  ImSN[(PosYZiel + 1),(PosXStart - 1)].BringToFront;
+                 end;
+               end;
+             end;
+           end;
+         end
+        else
+         begin  //Wenn eine (rote) Dame zieht
+          if (PosYZiel - PosYStart)*(-(PosYZiel - PosYStart)) = -1 then
+           begin  //Zug Normal (Dame, also Zug Logik vom normale ziehen + rückwärts, was nur eine Vorzeichen Änderung ist.)
+            if (PosXZiel - PosXStart)*(-(PosXZiel - PosXStart)) = -1 then
+             begin
+              SZ:=1;
+              Schlag:=0;
+             end;
+           end  //Schlagen dame rot
+          else if PosYZiel - PosYStart = 2 then
+           begin
+            if PosXZiel - PosXStart = 2 then
+             begin  //Fall: unten rechts (Dame schlägt nach unten rechts), eigentlich sowie schlagen bei einem normalen Stein mit geänderten Vorzeichen
+              if ImSG[(PosYZiel - 1),(PosXZiel - 1)].Enabled = true then
+               begin
+                SZ:=1;
+                ImSG[(PosYZiel - 1),(PosXZiel - 1)].Enabled:=false;
+                ImSG[(PosYZiel - 1),(PosXZiel - 1)].Visible:=false;
+                ImSG[(PosYZiel - 1),(PosXZiel - 1)].SendToBack;
+                ImSN[(PosYZiel - 1),(PosXZiel - 1)].Enabled:=true;
+                ImSN[(PosYZiel - 1),(PosXZiel - 1)].Visible:=true;
+                ImSN[(PosYZiel - 1),(PosXZiel - 1)].BringToFront;
+               end
+              else if ImSGD[(PosYZiel - 1),(PosXZiel - 1)].Enabled = true then
+               begin
+                SZ:=1;
+                ImSGD[(PosYZiel - 1),(PosXZiel - 1)].Enabled:=false;
+                ImSGD[(PosYZiel - 1),(PosXZiel - 1)].Visible:=false;
+                ImSGD[(PosYZiel - 1),(PosXZiel - 1)].SendToBack;
+                ImSN[(PosYZiel - 1),(PosXZiel - 1)].Enabled:=true;
+                ImSN[(PosYZiel - 1),(PosXZiel - 1)].Visible:=true;
+                ImSN[(PosYZiel - 1),(PosXZiel - 1)].BringToFront;
+               end;
+             end
+            else if PosXZiel - PosXStart = -2 then
+             begin  //Fall: unten links (Dame schlägt nach unten links)
+              if ImSG[(PosYZiel - 1),(PosXZiel + 1)].Enabled = true then
+               begin
+                SZ:=1;
+                ImSG[(PosYZiel - 1),(PosXZiel + 1)].Enabled:=false;
+                ImSG[(PosYZiel - 1),(PosXZiel + 1)].Visible:=false;
+                ImSG[(PosYZiel - 1),(PosXZiel + 1)].SendToBack;
+                ImSN[(PosYZiel - 1),(PosXZiel + 1)].Enabled:=true;
+                ImSN[(PosYZiel - 1),(PosXZiel + 1)].Visible:=true;
+                ImSN[(PosYZiel - 1),(PosXZiel + 1)].BringToFront;
+               end
+              else if ImSGD[(PosYZiel - 1),(PosXZiel + 1)].Enabled = true then
+               begin
+                SZ:=1;
+                ImSGD[(PosYZiel - 1),(PosXZiel + 1)].Enabled:=false;
+                ImSGD[(PosYZiel - 1),(PosXZiel + 1)].Visible:=false;
+                ImSGD[(PosYZiel - 1),(PosXZiel + 1)].SendToBack;
+                ImSN[(PosYZiel - 1),(PosXZiel + 1)].Enabled:=true;
+                ImSN[(PosYZiel - 1),(PosXZiel + 1)].Visible:=true;
+                ImSN[(PosYZiel - 1),(PosXZiel + 1)].BringToFront;
+               end;
+             end;
+           end
+          else if PosYZiel - PosYStart = -2 then
+           begin
+            if PosXZiel - PosXStart = 2 then
+             begin  //Fall: oben rechts (Dame schlägt nach oben rechts)
+              if ImSG[(PosYZiel + 1),(PosXZiel - 1)].Enabled = true then
+               begin
+                SZ:=1;
+                ImSG[(PosYZiel + 1),(PosXZiel - 1)].Enabled:=false;
+                ImSG[(PosYZiel + 1),(PosXZiel - 1)].Visible:=false;
+                ImSG[(PosYZiel + 1),(PosXZiel - 1)].SendToBack;
+                ImSN[(PosYZiel + 1),(PosXZiel - 1)].Enabled:=true;
+                ImSN[(PosYZiel + 1),(PosXZiel - 1)].Visible:=true;
+                ImSN[(PosYZiel + 1),(PosXZiel - 1)].BringToFront;
+               end
+              else if ImSGD[(PosYZiel + 1),(PosXZiel - 1)].Enabled = true then
+               begin
+                SZ:=1;
+                ImSGD[(PosYZiel + 1),(PosXZiel - 1)].Enabled:=false;
+                ImSGD[(PosYZiel + 1),(PosXZiel - 1)].Visible:=false;
+                ImSGD[(PosYZiel + 1),(PosXZiel - 1)].SendToBack;
+                ImSN[(PosYZiel + 1),(PosXZiel - 1)].Enabled:=true;
+                ImSN[(PosYZiel + 1),(PosXZiel - 1)].Visible:=true;
+                ImSN[(PosYZiel + 1),(PosXZiel - 1)].BringToFront;
+               end;
+             end
+            else if PosXZiel - PosXStart = -2 then
+             begin  //Fall: oben links (Dame schlägt nach oben links)
+              if ImSG[(PosYZiel + 1),(PosXZiel + 1)].Enabled = true then
+               begin
+                SZ:=1;
+                ImSG[(PosYZiel + 1),(PosXZiel + 1)].Enabled:=false;
+                ImSG[(PosYZiel + 1),(PosXZiel + 1)].Visible:=false;
+                ImSG[(PosYZiel + 1),(PosXZiel + 1)].SendToBack;
+                ImSN[(PosYZiel + 1),(PosXZiel + 1)].Enabled:=true;
+                ImSN[(PosYZiel + 1),(PosXZiel + 1)].Visible:=true;
+                ImSN[(PosYZiel + 1),(PosXZiel + 1)].BringToFront;
+               end
+              else if ImSGD[(PosYZiel + 1),(PosXZiel + 1)].Enabled = true then
+               begin
+                SZ:=1;
+                ImSGD[(PosYZiel + 1),(PosXZiel + 1)].Enabled:=false;
+                ImSGD[(PosYZiel + 1),(PosXZiel + 1)].Visible:=false;
+                ImSGD[(PosYZiel + 1),(PosXZiel + 1)].SendToBack;
+                ImSN[(PosYZiel + 1),(PosXZiel + 1)].Enabled:=true;
+                ImSN[(PosYZiel + 1),(PosXZiel + 1)].Visible:=true;
+                ImSN[(PosYZiel + 1),(PosXZiel + 1)].BringToFront;
+               end;
+             end;
+           end;
+         end;
+       end
+      else  //Gleiche Logik wie oben bei rot, nur nochmal für Gelb. (Bei dem Normalen Stein wurden lediglich die Vorzeichen umgedreht.)
+       begin
+        if DZ = -1 then //(nicht dame)
+         begin
+          if PosYZiel = (PosYStart + 1) then  //normal
+           begin
+            if (PosXZiel - PosXStart)*(-(PosXZiel - PosXStart)) = -1 then
+             begin
+              SZ:=1;
+              Schlag:=0;
+             end;
+           end
+          else
+           begin //schlagen
+            if PosYZiel = (PosYStart + 2) then
+             begin
+              if PosXZiel = (PosXStart + 2) then
+               begin
+                if ImSR[(PosYZiel - 1),(PosXStart + 1)].Enabled = true then
+                 begin
+                  SZ:=1;
+                  ImSR[(PosYZiel - 1),(PosXStart + 1)].Enabled:=false;
+                  ImSR[(PosYZiel - 1),(PosXStart + 1)].Visible:=false;
+                  ImSR[(PosYZiel - 1),(PosXStart + 1)].SendToBack;
+                  ImSN[(PosYZiel - 1),(PosXStart + 1)].Enabled:=true;
+                  ImSN[(PosYZiel - 1),(PosXStart + 1)].Visible:=true;
+                  ImSN[(PosYZiel - 1),(PosXStart + 1)].BringToFront;
+                 end
+                else if ImSRD[(PosYZiel - 1),(PosXStart + 1)].Enabled = true then
+                 begin
+                  SZ:=1;
+                  ImSRD[(PosYZiel - 1),(PosXStart + 1)].Enabled:=false;
+                  ImSRD[(PosYZiel - 1),(PosXStart + 1)].Visible:=false;
+                  ImSRD[(PosYZiel - 1),(PosXStart + 1)].SendToBack;
+                  ImSN[(PosYZiel - 1),(PosXStart + 1)].Enabled:=true;
+                  ImSN[(PosYZiel - 1),(PosXStart + 1)].Visible:=true;
+                  ImSN[(PosYZiel - 1),(PosXStart + 1)].BringToFront;
+                 end;
+               end
+              else if PosXZiel = (PosXStart - 2) then
+               begin
+                if ImSR[(PosYZiel - 1),(PosXStart - 1)].Enabled = true then
+                 begin
+                  SZ:=1;
+                  ImSR[(PosYZiel - 1),(PosXStart - 1)].Enabled:=false;
+                  ImSR[(PosYZiel - 1),(PosXStart - 1)].Visible:=false;
+                  ImSR[(PosYZiel - 1),(PosXStart - 1)].SendToBack;
+                  ImSN[(PosYZiel - 1),(PosXStart - 1)].Enabled:=true;
+                  ImSN[(PosYZiel - 1),(PosXStart - 1)].Visible:=true;
+                  ImSN[(PosYZiel - 1),(PosXStart - 1)].BringToFront;
+                 end
+                else if ImSRD[(PosYZiel - 1),(PosXStart - 1)].Enabled = true then
+                 begin
+                  SZ:=1;
+                  ImSRD[(PosYZiel - 1),(PosXStart - 1)].Enabled:=false;
+                  ImSRD[(PosYZiel - 1),(PosXStart - 1)].Visible:=false;
+                  ImSRD[(PosYZiel - 1),(PosXStart - 1)].SendToBack;
+                  ImSN[(PosYZiel - 1),(PosXStart - 1)].Enabled:=true;
+                  ImSN[(PosYZiel - 1),(PosXStart - 1)].Visible:=true;
+                  ImSN[(PosYZiel - 1),(PosXStart - 1)].BringToFront;
+                 end;
+               end;
+             end;
+           end;
+         end
+        else
+         begin  //dame
+          if (PosYZiel - PosYStart)*(-(PosYZiel - PosYStart)) = -1 then
+           begin  //Zug normal dame gelb
+            if (PosXZiel - PosXStart)*(-(PosXZiel - PosXStart)) = -1 then
+             begin
+              SZ:=1;
+              Schlag:=0;
+             end;
+           end  //Schlagen dame gelb
+          else if PosYZiel - PosYStart = 2 then
+           begin
+            if PosXZiel - PosXStart = 2 then
+             begin  //Fall: unten rechts
+              if ImSR[(PosYZiel - 1),(PosXZiel - 1)].Enabled = true then
+               begin
+                SZ:=1;
+                ImSR[(PosYZiel - 1),(PosXZiel - 1)].Enabled:=false;
+                ImSR[(PosYZiel - 1),(PosXZiel - 1)].Visible:=false;
+                ImSR[(PosYZiel - 1),(PosXZiel - 1)].SendToBack;
+                ImSN[(PosYZiel - 1),(PosXZiel - 1)].Enabled:=true;
+                ImSN[(PosYZiel - 1),(PosXZiel - 1)].Visible:=true;
+                ImSN[(PosYZiel - 1),(PosXZiel - 1)].BringToFront;
+               end
+              else if ImSRD[(PosYZiel - 1),(PosXZiel - 1)].Enabled = true then
+               begin
+                SZ:=1;
+                ImSRD[(PosYZiel - 1),(PosXZiel - 1)].Enabled:=false;
+                ImSRD[(PosYZiel - 1),(PosXZiel - 1)].Visible:=false;
+                ImSRD[(PosYZiel - 1),(PosXZiel - 1)].SendToBack;
+                ImSN[(PosYZiel - 1),(PosXZiel - 1)].Enabled:=true;
+                ImSN[(PosYZiel - 1),(PosXZiel - 1)].Visible:=true;
+                ImSN[(PosYZiel - 1),(PosXZiel - 1)].BringToFront;
+               end;
+             end
+            else if PosXZiel - PosXStart = -2 then
+             begin  //Fall: unten links
+              if ImSR[(PosYZiel - 1),(PosXZiel + 1)].Enabled = true then
+               begin
+                SZ:=1;
+                ImSR[(PosYZiel - 1),(PosXZiel + 1)].Enabled:=false;
+                ImSR[(PosYZiel - 1),(PosXZiel + 1)].Visible:=false;
+                ImSR[(PosYZiel - 1),(PosXZiel + 1)].SendToBack;
+                ImSN[(PosYZiel - 1),(PosXZiel + 1)].Enabled:=true;
+                ImSN[(PosYZiel - 1),(PosXZiel + 1)].Visible:=true;
+                ImSN[(PosYZiel - 1),(PosXZiel + 1)].BringToFront;
+               end
+              else if ImSRD[(PosYZiel - 1),(PosXZiel + 1)].Enabled = true then
+               begin
+                SZ:=1;
+                ImSRD[(PosYZiel - 1),(PosXZiel + 1)].Enabled:=false;
+                ImSRD[(PosYZiel - 1),(PosXZiel + 1)].Visible:=false;
+                ImSRD[(PosYZiel - 1),(PosXZiel + 1)].SendToBack;
+                ImSN[(PosYZiel - 1),(PosXZiel + 1)].Enabled:=true;
+                ImSN[(PosYZiel - 1),(PosXZiel + 1)].Visible:=true;
+                ImSN[(PosYZiel - 1),(PosXZiel + 1)].BringToFront;
+               end;
+             end;
+           end
+          else if PosYZiel - PosYStart = -2 then
+           begin
+            if PosXZiel - PosXStart = 2 then
+             begin  //Fall: oben rechts
+              if ImSR[(PosYZiel + 1),(PosXZiel - 1)].Enabled = true then
+               begin
+                SZ:=1;
+                ImSR[(PosYZiel + 1),(PosXZiel - 1)].Enabled:=false;
+                ImSR[(PosYZiel + 1),(PosXZiel - 1)].Visible:=false;
+                ImSR[(PosYZiel + 1),(PosXZiel - 1)].SendToBack;
+                ImSN[(PosYZiel + 1),(PosXZiel - 1)].Enabled:=true;
+                ImSN[(PosYZiel + 1),(PosXZiel - 1)].Visible:=true;
+                ImSN[(PosYZiel + 1),(PosXZiel - 1)].BringToFront;
+               end
+              else if ImSRD[(PosYZiel + 1),(PosXZiel - 1)].Enabled = true then
+               begin
+                SZ:=1;
+                ImSRD[(PosYZiel + 1),(PosXZiel - 1)].Enabled:=false;
+                ImSRD[(PosYZiel + 1),(PosXZiel - 1)].Visible:=false;
+                ImSRD[(PosYZiel + 1),(PosXZiel - 1)].SendToBack;
+                ImSN[(PosYZiel + 1),(PosXZiel - 1)].Enabled:=true;
+                ImSN[(PosYZiel + 1),(PosXZiel - 1)].Visible:=true;
+                ImSN[(PosYZiel + 1),(PosXZiel - 1)].BringToFront;
+               end;
+             end
+            else if PosXZiel - PosXStart = -2 then
+             begin  //Fall: oben links
+              if ImSR[(PosYZiel + 1),(PosXZiel + 1)].Enabled = true then
+               begin
+                SZ:=1;
+                ImSR[(PosYZiel + 1),(PosXZiel + 1)].Enabled:=false;
+                ImSR[(PosYZiel + 1),(PosXZiel + 1)].Visible:=false;
+                ImSR[(PosYZiel + 1),(PosXZiel + 1)].SendToBack;
+                ImSN[(PosYZiel + 1),(PosXZiel + 1)].Enabled:=true;
+                ImSN[(PosYZiel + 1),(PosXZiel + 1)].Visible:=true;
+                ImSN[(PosYZiel + 1),(PosXZiel + 1)].BringToFront;
+               end
+              else if ImSRD[(PosYZiel + 1),(PosXZiel + 1)].Enabled = true then
+               begin
+                SZ:=1;
+                ImSRD[(PosYZiel + 1),(PosXZiel + 1)].Enabled:=false;
+                ImSRD[(PosYZiel + 1),(PosXZiel + 1)].Visible:=false;
+                ImSRD[(PosYZiel + 1),(PosXZiel + 1)].SendToBack;
+                ImSN[(PosYZiel + 1),(PosXZiel + 1)].Enabled:=true;
+                ImSN[(PosYZiel + 1),(PosXZiel + 1)].Visible:=true;
+                ImSN[(PosYZiel + 1),(PosXZiel + 1)].BringToFront;
+               end;
+             end;
+           end;
+         end;
+       end;
+
+     //Zug Ausführen, wenn SZ (Szenario) = 1, also wenn der Zug legal ist.
+      if SZ = 1 then
+       begin
+        if DZ = -1 then  //Wenn ein normaler Stein zieht
+         begin
+          if WaZ = 1 then  //Wenn Rot zieht.
+           begin  //Wenn ein normaler Stein zieht
+            //Alten Stein unsichtbar machen. Oberfläche vorbereiten, falls in der Zukunft ein anderer Stein auf das selbe Feld gezogen wird.
+            ImSR[PosYStart,PosXStart].Visible:=false;
+            ImSR[PosYStart,PosXStart].Enabled:=false;
+            ImSR[PosYStart,PosXStart].SendToBack;
+            ImSN[PosYStart,PosXStart].Visible:=true;
+            ImSN[PosYStart,PosXStart].Enabled:=true;
+            ImSN[PosYStart,PosXStart].BringToFront;
+
+            //Neuen Stein schtbar machen.
+            if PosYZiel <> 1 then  //normaler Zug
+             begin
+              ImSR[PosYZiel,PosXZiel].Visible:=true;
+              ImSR[PosYZiel,PosXZiel].Enabled:=true;
+              ImSR[PosYZiel,PosXZiel].BringToFront;
+             end
+            else  //Bei Umwandlung zu einer Dame
+             begin
+              ImSRD[PosYZiel,PosXZiel].Visible:=true;
+              ImSRD[PosYZiel,PosXZiel].Enabled:=true;
+              ImSRD[PosYZiel,PosXZiel].BringToFront;
+             end;
+            ImSN[PosYZiel,PosXZiel].Visible:=false;
+            ImSN[PosYZiel,PosXZiel].Enabled:=false;
+            ImSN[PosYZiel,PosXZiel].SendToBack;
+           end
+          else  //Wenn Gelb zieht. Gleich wie oben.
+           begin
+            ImSG[PosYStart,PosXStart].Visible:=false;
+            ImSG[PosYStart,PosXStart].Enabled:=false;
+            ImSG[PosYStart,PosXStart].SendToBack;
+            ImSN[PosYStart,PosXStart].Visible:=true;
+            ImSN[PosYStart,PosXStart].Enabled:=true;
+            ImSN[PosYStart,PosXStart].BringToFront;
+
+            if PosYZiel <> 8 then
+             begin
+              ImSG[PosYZiel,PosXZiel].Visible:=true;
+              ImSG[PosYZiel,PosXZiel].Enabled:=true;
+              ImSG[PosYZiel,PosXZiel].BringToFront;
+             end
+            else
+             begin
+              ImSGD[PosYZiel,PosXZiel].Visible:=true;
+              ImSGD[PosYZiel,PosXZiel].Enabled:=true;
+              ImSGD[PosYZiel,PosXZiel].BringToFront
+             end;
+            ImSN[PosYZiel,PosXZiel].Visible:=false;
+            ImSN[PosYZiel,PosXZiel].Enabled:=false;
+            ImSN[PosYZiel,PosXZiel].SendToBack;
+           end;
+         end
+        else  //Wenn Dame zieht
+         begin
+          if WaZ = 1 then  //Wenn Rot zieht.
+           begin
+            ImSRD[PosYStart,PosXStart].Visible:=false;
+            ImSRD[PosYStart,PosXStart].Enabled:=false;
+            ImSRD[PosYStart,PosXStart].SendToBack;
+            ImSN[PosYStart,PosXStart].Visible:=true;
+            ImSN[PosYStart,PosXStart].Enabled:=true;
+            ImSN[PosYStart,PosXStart].BringToFront;
+
+            ImSRD[PosYZiel,PosXZiel].Visible:=true;
+            ImSRD[PosYZiel,PosXZiel].Enabled:=true;
+            ImSRD[PosYZiel,PosXZiel].BringToFront;
+            ImSN[PosYZiel,PosXZiel].Visible:=false;
+            ImSN[PosYZiel,PosXZiel].Enabled:=false;
+            ImSN[PosYZiel,PosXZiel].SendToBack;
+           end
+          else  //Wenn Gelb zieht
+           begin
+            ImSGD[PosYStart,PosXStart].Visible:=false;
+            ImSGD[PosYStart,PosXStart].Enabled:=false;
+            ImSGD[PosYStart,PosXStart].SendToBack;
+            ImSN[PosYStart,PosXStart].Visible:=true;
+            ImSN[PosYStart,PosXStart].Enabled:=true;
+            ImSN[PosYStart,PosXStart].BringToFront;
+
+            ImSGD[PosYZiel,PosXZiel].Visible:=true;
+            ImSGD[PosYZiel,PosXZiel].Enabled:=true;
+            ImSGD[PosYZiel,PosXZiel].BringToFront;
+            ImSN[PosYZiel,PosXZiel].Visible:=false;
+            ImSN[PosYZiel,PosXZiel].Enabled:=false;
+            ImSN[PosYZiel,PosXZiel].SendToBack;
+           end;
+         end;
+
+        //Korrektur; Sichtbarkeit der Umrandungen.
+        ImP.BringToFront;
+        ImP2.BringToFront;
+        WaZ:=WaZ*-1;  //Wer auch immer dran war, jetzt ist der andere dran. Wer dran ist wird über die Variable "WaZ"(WerAmZug) bestimmt. Deswegen wird sie hier umgekehrt.
+        AZA:=1;  //Korrektur Zustandsvariable.
+
+        //Sieg Überprüfung
+        k := 1;  //k bestimmt in der folgenden Sequenz, wann ein Spielstein überprüft wird, da nicht auf allen Feldern (nicht auf den weisen) ein Spielstein generiert wurde.
+        l:=12;  //Am Anfang hatten beide Spieler 12 Steine.
+        m:=12;  //S.o.
+        for i := 1 to 8 do
+         begin
+          for j := 1 to 8 do
+           begin
+            if k = -1 then  //Spielsteine werden nur auf jedem zweiten Feld erstellt.
+             begin
+              if ImSR[i,j].Visible or ImSRD[i,j].Visible then
+               begin
+                l:=l-1;  //Wenn auf dem Feld das überprüft wurde ein Feld ist, wird eins abgezogen.
+               end;
+              if ImSG[i,j].Visible or ImSGD[i,j].Visible then
+               begin
+                m:=m-1;  //Siehe Zeile 993.
+               end;
+             end;
+            //Korrekter Zustand k-Variable (bestimmt wo/wann die Spielsteine erstellt werden).
+            k:=k*-1;  //Siehe oben
+           end;
+          k:=k*-1;  //Siehe oben
+         end;
+
+        if l = 12 then  //Sieg Gelb
+         begin
+          ShowMessage('Gelb hat gewonnen!');
+          Sleep(800);  //Warte
+          Zurücksetzen(Self);  //Setze zurück. Zeile 1806.
+         end
+        else if m = 12 then  //Sieg Rot, s.o.
+         begin
+          ShowMessage('Rot hat gewonnen!');
+          Sleep(800);
+          Zurücksetzen(Self);
+         end;
+       end
+      else //Wenn illegaler Zug
+       begin
+        ShowMessage('Illegaler Zug');
+        AZA:=1;  //Korrektur Zustandsvariable, Fehlerprevention
+        ImP.Left:=-100;  //Umrandungen werden "entfernt".
+        ImP2.Left:=-100;  //Siehe oben
+       end;
+     end;
+   end
+  else
+   begin  //nach kettenfangen überprüfen, wenn kettenfangen vorliegt.
     GetCursorPos(MPos);  //Speichert die aktuelle Mausposition.
     MPos := Form1.ScreenToClient(MPos);  //Sorgt dafür, das die Position realativ zum Fenster (also im selben "Koordinatensystem" wie die Komponenten) gespeichert wird.
     MPosX := MPos.X - ImP2.Width div 2;  //Nicht benötigt. Sorgt halt einfach dafür, dass die angegebene Position etwas verschoben ist. Wenn man jetzt in die Mitte klickt kommen ca. die Koordinaten von .Left und .Top des angeklickten Feldes raus. "div 2" = "/2", aber das Ergebnis ist automatisch gerundet.
@@ -487,143 +1053,90 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
      end;
 
     //Setze PosYZiel
-    i:=0;  //Reset für Schleife
-    PosYZiel:=-1;  //Darf nicht i seien, muss unter 0 oder über 7 seien.
-    k:=25;  //StartPosition1 zum Überprüfen - 50
-    l:=75;  //StartPosition2 zum Überprüfen - 50
+    i:=0;
+    PosYZiel:=-1;
+    k:=25;
+    l:=75;
     while PosYZiel <> i do
      begin
-      k:=k+50;  //zu überprüfende Position
-      l:=l+50;  //zu überprüfende Position
-      i:=i+1;   //Aktuelle Reihe
-      if MPosY > k then  //PositionTest1
+      k:=k+50;
+      l:=l+50;
+      i:=i+1;
+      if MPosY > k then
        begin
-        if MPosY < l then  //PositionTest1
+        if MPosY < l then
          begin
           PosYZiel:=i;  //Beendet Schleife und setzt Position.
-          ImP2.Top:=k+25;  //Setzt die Position vom Pointer.
+          ImP2.Top:=k+25;
          end;
        end;
      end;
 
-
-    //Überprüfung ob Zug legal (Normaler Zug, schlagen, Kette, Zug als Dame, Kette-Dame/Schlage-Dame)
+    //Überprüfung ob Zug legal (Nur für Ketten-Schlag)
     SZ:=0;  //Korrekter Start-Zustand. Hier: SZ wird genutzt um festzulegen, ob der Zug legal ist (0=Illegal, 1=legal)
     k:=0;  //Fehlerprevention. Nur existierende Felder können bearbeitet werden.
-    Schlag:=1;
+    Schlag:=1;  //Bei einem Ketten-SCHLAG, wird immer geschlagen.
     //Wenn;
     if WaZ = 1 then  //rot,
      begin
       if DZ = -1 then  //keine Dame,
-       begin
-        if PosYZiel = (PosYStart - 1) then  //einen normaler Zug
+       begin //einen Stein schlägt
+        if PosYZiel = (PosYStart - 2) then  //Überprüfen, ob Zug legal seien könnte
          begin
-          if (PosXZiel - PosXStart)*(-(PosXZiel - PosXStart)) = -1 then  //Nach rechts oder links (Wenn z.B. von X6 nach X5, dann (6-5)*-(6-5)=1*-1=-1, wenn z.B. von X5 nach X6 dann (5-6)*-(5-6)=-1*-(-1)=-1*1=-1)
+          if PosXZiel = (PosXStart + 2) then  //Schlagen rechts
            begin
-            SZ:=1;  //Zug ist legal
-            Schlag:=0;
-
-            {//Hätte Schlagen können?
-            for i := 1 to 8 do
+            if ImSG[(PosYZiel + 1),(PosXStart + 1)].Enabled = true then  //Überprüfung, ob da auch ein Schlagbarer Stein war.
              begin
-              for j := 1 to 8 do
-               begin
-                if Assigned(ImSR[i,j]) then
-                 begin
-                  if ImSR[i,j].Visible = true then
-                   begin
-                    if Assigned(ImSN[i+2,j+2]) then
-                     begin
-                      if ImSN[i+2,j+2].Visible = true then
-                       begin
-                        ShowMessage('Z');
-                       end;
-                     end;
-
-                   end;
-                 end;
-                if Assigned(ImSRD[i,j]) then
-                 begin
-                  if ImSRD[i,j].Visible = true then
-                   begin
-
-                   end;
-                 end;
-               end;
-             end;   }
-
-
-
-
-           end;
-         end
-        else
-         begin //einen Stein schlägt
-          if PosYZiel = (PosYStart - 2) then  //Überprüfen, ob Zug legal seien könnte
-           begin
-            if PosXZiel = (PosXStart + 2) then  //Schlagen rechts
-             begin
-              if ImSG[(PosYZiel + 1),(PosXStart + 1)].Enabled = true then  //Überprüfung, ob da auch ein Schlagbarer Stein war.
-               begin
-                SZ:=1;  //Zug legal
-                ImSG[(PosYZiel + 1),(PosXStart + 1)].Enabled:=false;  //Leeren des Feldes, wo der geschlagene Stein ist
-                ImSG[(PosYZiel + 1),(PosXStart + 1)].Visible:=false;  //Siehe oben
-                ImSG[(PosYZiel + 1),(PosXStart + 1)].SendToBack;  //Siehe oben
-                ImSN[(PosYZiel + 1),(PosXStart + 1)].Enabled:=true;  //Siehe oben
-                ImSN[(PosYZiel + 1),(PosXStart + 1)].Visible:=true;  //Siehe oben
-                ImSN[(PosYZiel + 1),(PosXStart + 1)].BringToFront;  //Siehe oben
-               end
-              else if ImSGD[(PosYZiel + 1),(PosXStart + 1)].Enabled = true then  //Es kann auch seien, dass eine Dame geschlagen wird.
-               begin
-                SZ:=1;
-                ImSGD[(PosYZiel + 1),(PosXStart + 1)].Enabled:=false;
-                ImSGD[(PosYZiel + 1),(PosXStart + 1)].Visible:=false;
-                ImSGD[(PosYZiel + 1),(PosXStart + 1)].SendToBack;
-                ImSN[(PosYZiel + 1),(PosXStart + 1)].Enabled:=true;
-                ImSN[(PosYZiel + 1),(PosXStart + 1)].Visible:=true;
-                ImSN[(PosYZiel + 1),(PosXStart + 1)].BringToFront;
-               end;
+              SZ:=1;  //Zug legal
+              ImSG[(PosYZiel + 1),(PosXStart + 1)].Enabled:=false;  //Leeren des Feldes, wo der geschlagene Stein ist
+              ImSG[(PosYZiel + 1),(PosXStart + 1)].Visible:=false;  //Siehe oben
+              ImSG[(PosYZiel + 1),(PosXStart + 1)].SendToBack;  //Siehe oben
+              ImSN[(PosYZiel + 1),(PosXStart + 1)].Enabled:=true;  //Siehe oben
+              ImSN[(PosYZiel + 1),(PosXStart + 1)].Visible:=true;  //Siehe oben
+              ImSN[(PosYZiel + 1),(PosXStart + 1)].BringToFront;  //Siehe oben
              end
-            else if PosXZiel = (PosXStart - 2) then  //Siehe oben (Schlagen links, gleich wie schlagen rechts nur Vorzeichen anders)
+            else if ImSGD[(PosYZiel + 1),(PosXStart + 1)].Enabled = true then  //Es kann auch seien, dass eine Dame geschlagen wird.
              begin
-              if ImSG[(PosYZiel + 1),(PosXStart - 1)].Enabled = true then
-               begin
-                SZ:=1;
-                ImSG[(PosYZiel + 1),(PosXStart - 1)].Enabled:=false;
-                ImSG[(PosYZiel + 1),(PosXStart - 1)].Visible:=false;
-                ImSG[(PosYZiel + 1),(PosXStart - 1)].SendToBack;
-                ImSN[(PosYZiel + 1),(PosXStart - 1)].Enabled:=true;
-                ImSN[(PosYZiel + 1),(PosXStart - 1)].Visible:=true;
-                ImSN[(PosYZiel + 1),(PosXStart - 1)].BringToFront;
-               end
-              else if ImSGD[(PosYZiel + 1),(PosXStart - 1)].Enabled = true then
-               begin
-                SZ:=1;
-                ImSGD[(PosYZiel + 1),(PosXStart - 1)].Enabled:=false;
-                ImSGD[(PosYZiel + 1),(PosXStart - 1)].Visible:=false;
-                ImSGD[(PosYZiel + 1),(PosXStart - 1)].SendToBack;
-                ImSN[(PosYZiel + 1),(PosXStart - 1)].Enabled:=true;
-                ImSN[(PosYZiel + 1),(PosXStart - 1)].Visible:=true;
-                ImSN[(PosYZiel + 1),(PosXStart - 1)].BringToFront;
-               end;
+              SZ:=1;
+              ImSGD[(PosYZiel + 1),(PosXStart + 1)].Enabled:=false;
+              ImSGD[(PosYZiel + 1),(PosXStart + 1)].Visible:=false;
+              ImSGD[(PosYZiel + 1),(PosXStart + 1)].SendToBack;
+              ImSN[(PosYZiel + 1),(PosXStart + 1)].Enabled:=true;
+              ImSN[(PosYZiel + 1),(PosXStart + 1)].Visible:=true;
+              ImSN[(PosYZiel + 1),(PosXStart + 1)].BringToFront;
+             end;
+           end
+          else if PosXZiel = (PosXStart - 2) then  //Siehe oben (Schlagen links, gleich wie schlagen rechts nur Vorzeichen anders)
+           begin
+            if ImSG[(PosYZiel + 1),(PosXStart - 1)].Enabled = true then
+             begin
+              SZ:=1;
+              ImSG[(PosYZiel + 1),(PosXStart - 1)].Enabled:=false;
+              ImSG[(PosYZiel + 1),(PosXStart - 1)].Visible:=false;
+              ImSG[(PosYZiel + 1),(PosXStart - 1)].SendToBack;
+              ImSN[(PosYZiel + 1),(PosXStart - 1)].Enabled:=true;
+              ImSN[(PosYZiel + 1),(PosXStart - 1)].Visible:=true;
+              ImSN[(PosYZiel + 1),(PosXStart - 1)].BringToFront;
+             end
+            else if ImSGD[(PosYZiel + 1),(PosXStart - 1)].Enabled = true then
+             begin
+              SZ:=1;
+              ImSGD[(PosYZiel + 1),(PosXStart - 1)].Enabled:=false;
+              ImSGD[(PosYZiel + 1),(PosXStart - 1)].Visible:=false;
+              ImSGD[(PosYZiel + 1),(PosXStart - 1)].SendToBack;
+              ImSN[(PosYZiel + 1),(PosXStart - 1)].Enabled:=true;
+              ImSN[(PosYZiel + 1),(PosXStart - 1)].Visible:=true;
+              ImSN[(PosYZiel + 1),(PosXStart - 1)].BringToFront;
              end;
            end;
          end;
        end
       else
        begin  //Wenn eine (rote) Dame zieht
-        if (PosYZiel - PosYStart)*(-(PosYZiel - PosYStart)) = -1 then
-         begin  //Zug Normal (Dame, also Zug Logik vom normale ziehen + rückwärts, was nur eine Vorzeichen Änderung ist.)
-          if (PosXZiel - PosXStart)*(-(PosXZiel - PosXStart)) = -1 then
-           begin
-            SZ:=1;
-            Schlag:=0;
-           end;
-         end  //Schlagen dame rot
-        else if PosYZiel - PosYStart = 2 then
+        if PosYZiel - PosYStart = 2 then
          begin
           if PosXZiel - PosXStart = 2 then
-           begin  //case unten rechts (Dame schlägt nach unten rechts), eigentlich sowie schlagen bei einem normalen Stein mit geänderten Vorzeichen
+           begin  //Fall: unten rechts (Dame schlägt nach unten rechts), eigentlich sowie schlagen bei einem normalen Stein mit geänderten Vorzeichen
             if ImSG[(PosYZiel - 1),(PosXZiel - 1)].Enabled = true then
              begin
               SZ:=1;
@@ -646,7 +1159,7 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
              end;
            end
           else if PosXZiel - PosXStart = -2 then
-           begin  //case unten links (Dame schlägt nach unten links)
+           begin  //Fall: unten links (Dame schlägt nach unten links)
             if ImSG[(PosYZiel - 1),(PosXZiel + 1)].Enabled = true then
              begin
               SZ:=1;
@@ -672,7 +1185,7 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
         else if PosYZiel - PosYStart = -2 then
          begin
           if PosXZiel - PosXStart = 2 then
-           begin  //case oben rechts (Dame schlägt nach oben rechts)
+           begin  //Fall: oben rechts (Dame schlägt nach oben rechts)
             if ImSG[(PosYZiel + 1),(PosXZiel - 1)].Enabled = true then
              begin
               SZ:=1;
@@ -695,7 +1208,7 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
              end;
            end
           else if PosXZiel - PosXStart = -2 then
-           begin  //case oben links (Dame schlägt nach oben links)
+           begin  //Fall: oben links (Dame schlägt nach oben links)
             if ImSG[(PosYZiel + 1),(PosXZiel + 1)].Enabled = true then
              begin
               SZ:=1;
@@ -723,82 +1236,63 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
     else  //Gleiche Logik wie oben bei rot, nur nochmal für Gelb. (Bei dem Normalen Stein wurden lediglich die Vorzeichen umgedreht.)
      begin
       if DZ = -1 then //(nicht dame)
-       begin
-        if PosYZiel = (PosYStart + 1) then  //normal
+       begin  //schlagen
+        if PosYZiel = (PosYStart + 2) then
          begin
-          if (PosXZiel - PosXStart)*(-(PosXZiel - PosXStart)) = -1 then
+          if PosXZiel = (PosXStart + 2) then
            begin
-            SZ:=1;
-            Schlag:=0;
-           end;
-         end
-        else
-         begin //schlagen
-          if PosYZiel = (PosYStart + 2) then
-           begin
-            if PosXZiel = (PosXStart + 2) then
+            if ImSR[(PosYZiel - 1),(PosXStart + 1)].Enabled = true then
              begin
-              if ImSR[(PosYZiel - 1),(PosXStart + 1)].Enabled = true then
-               begin
-                SZ:=1;
-                ImSR[(PosYZiel - 1),(PosXStart + 1)].Enabled:=false;
-                ImSR[(PosYZiel - 1),(PosXStart + 1)].Visible:=false;
-                ImSR[(PosYZiel - 1),(PosXStart + 1)].SendToBack;
-                ImSN[(PosYZiel - 1),(PosXStart + 1)].Enabled:=true;
-                ImSN[(PosYZiel - 1),(PosXStart + 1)].Visible:=true;
-                ImSN[(PosYZiel - 1),(PosXStart + 1)].BringToFront;
-               end
-              else if ImSRD[(PosYZiel - 1),(PosXStart + 1)].Enabled = true then
-               begin
-                SZ:=1;
-                ImSRD[(PosYZiel - 1),(PosXStart + 1)].Enabled:=false;
-                ImSRD[(PosYZiel - 1),(PosXStart + 1)].Visible:=false;
-                ImSRD[(PosYZiel - 1),(PosXStart + 1)].SendToBack;
-                ImSN[(PosYZiel - 1),(PosXStart + 1)].Enabled:=true;
-                ImSN[(PosYZiel - 1),(PosXStart + 1)].Visible:=true;
-                ImSN[(PosYZiel - 1),(PosXStart + 1)].BringToFront;
-               end;
+              SZ:=1;
+              ImSR[(PosYZiel - 1),(PosXStart + 1)].Enabled:=false;
+              ImSR[(PosYZiel - 1),(PosXStart + 1)].Visible:=false;
+              ImSR[(PosYZiel - 1),(PosXStart + 1)].SendToBack;
+              ImSN[(PosYZiel - 1),(PosXStart + 1)].Enabled:=true;
+              ImSN[(PosYZiel - 1),(PosXStart + 1)].Visible:=true;
+              ImSN[(PosYZiel - 1),(PosXStart + 1)].BringToFront;
              end
-            else if PosXZiel = (PosXStart - 2) then
+            else if ImSRD[(PosYZiel - 1),(PosXStart + 1)].Enabled = true then
              begin
-              if ImSR[(PosYZiel - 1),(PosXStart - 1)].Enabled = true then
-               begin
-                SZ:=1;
-                ImSR[(PosYZiel - 1),(PosXStart - 1)].Enabled:=false;
-                ImSR[(PosYZiel - 1),(PosXStart - 1)].Visible:=false;
-                ImSR[(PosYZiel - 1),(PosXStart - 1)].SendToBack;
-                ImSN[(PosYZiel - 1),(PosXStart - 1)].Enabled:=true;
-                ImSN[(PosYZiel - 1),(PosXStart - 1)].Visible:=true;
-                ImSN[(PosYZiel - 1),(PosXStart - 1)].BringToFront;
-               end
-              else if ImSRD[(PosYZiel - 1),(PosXStart - 1)].Enabled = true then
-               begin
-                SZ:=1;
-                ImSRD[(PosYZiel - 1),(PosXStart - 1)].Enabled:=false;
-                ImSRD[(PosYZiel - 1),(PosXStart - 1)].Visible:=false;
-                ImSRD[(PosYZiel - 1),(PosXStart - 1)].SendToBack;
-                ImSN[(PosYZiel - 1),(PosXStart - 1)].Enabled:=true;
-                ImSN[(PosYZiel - 1),(PosXStart - 1)].Visible:=true;
-                ImSN[(PosYZiel - 1),(PosXStart - 1)].BringToFront;
-               end;
+              SZ:=1;
+              ImSRD[(PosYZiel - 1),(PosXStart + 1)].Enabled:=false;
+              ImSRD[(PosYZiel - 1),(PosXStart + 1)].Visible:=false;
+              ImSRD[(PosYZiel - 1),(PosXStart + 1)].SendToBack;
+              ImSN[(PosYZiel - 1),(PosXStart + 1)].Enabled:=true;
+              ImSN[(PosYZiel - 1),(PosXStart + 1)].Visible:=true;
+              ImSN[(PosYZiel - 1),(PosXStart + 1)].BringToFront;
+             end;
+           end
+          else if PosXZiel = (PosXStart - 2) then
+           begin
+            if ImSR[(PosYZiel - 1),(PosXStart - 1)].Enabled = true then
+             begin
+              SZ:=1;
+              ImSR[(PosYZiel - 1),(PosXStart - 1)].Enabled:=false;
+              ImSR[(PosYZiel - 1),(PosXStart - 1)].Visible:=false;
+              ImSR[(PosYZiel - 1),(PosXStart - 1)].SendToBack;
+              ImSN[(PosYZiel - 1),(PosXStart - 1)].Enabled:=true;
+              ImSN[(PosYZiel - 1),(PosXStart - 1)].Visible:=true;
+              ImSN[(PosYZiel - 1),(PosXStart - 1)].BringToFront;
+             end
+            else if ImSRD[(PosYZiel - 1),(PosXStart - 1)].Enabled = true then
+             begin
+              SZ:=1;
+              ImSRD[(PosYZiel - 1),(PosXStart - 1)].Enabled:=false;
+              ImSRD[(PosYZiel - 1),(PosXStart - 1)].Visible:=false;
+              ImSRD[(PosYZiel - 1),(PosXStart - 1)].SendToBack;
+              ImSN[(PosYZiel - 1),(PosXStart - 1)].Enabled:=true;
+              ImSN[(PosYZiel - 1),(PosXStart - 1)].Visible:=true;
+              ImSN[(PosYZiel - 1),(PosXStart - 1)].BringToFront;
              end;
            end;
          end;
        end
       else
        begin  //dame
-        if (PosYZiel - PosYStart)*(-(PosYZiel - PosYStart)) = -1 then
-         begin  //Zug normal dame gelb
-          if (PosXZiel - PosXStart)*(-(PosXZiel - PosXStart)) = -1 then
-           begin
-            SZ:=1;
-            Schlag:=0;
-           end;
-         end  //Schlagen dame gelb
-        else if PosYZiel - PosYStart = 2 then
+        if PosYZiel - PosYStart = 2 then
          begin
           if PosXZiel - PosXStart = 2 then
-           begin  //case unten rechts
+           begin  //Fall: unten rechts
             if ImSR[(PosYZiel - 1),(PosXZiel - 1)].Enabled = true then
              begin
               SZ:=1;
@@ -821,7 +1315,7 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
              end;
            end
           else if PosXZiel - PosXStart = -2 then
-           begin  //case unten links
+           begin  //Fall: unten links
             if ImSR[(PosYZiel - 1),(PosXZiel + 1)].Enabled = true then
              begin
               SZ:=1;
@@ -847,7 +1341,7 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
         else if PosYZiel - PosYStart = -2 then
          begin
           if PosXZiel - PosXStart = 2 then
-           begin  //case oben rechts
+           begin  //Fall: oben rechts
             if ImSR[(PosYZiel + 1),(PosXZiel - 1)].Enabled = true then
              begin
               SZ:=1;
@@ -870,7 +1364,7 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
              end;
            end
           else if PosXZiel - PosXStart = -2 then
-           begin  //case oben links
+           begin  //Fall: oben links
             if ImSR[(PosYZiel + 1),(PosXZiel + 1)].Enabled = true then
              begin
               SZ:=1;
@@ -896,7 +1390,7 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
        end;
      end;
 
-   //Zug Ausführen, wenn SZ (Szenario) = 1, also wenn der Zug legal ist.
+    //Zug Ausführen, wenn SZ (Szenario) = 1, also wenn der Zug legal ist.
     if SZ = 1 then
      begin
       if DZ = -1 then  //Wenn ein normaler Stein zieht
@@ -995,9 +1489,10 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
       ImP2.BringToFront;
       WaZ:=WaZ*-1;  //Wer auch immer dran war, jetzt ist der andere dran. Wer dran ist wird über die Variable "WaZ"(WerAmZug) bestimmt. Deswegen wird sie hier umgekehrt.
       AZA:=1;  //Korrektur Zustandsvariable.
+      KettenSchlag:=0;
 
       //Sieg Überprüfung
-{}{}  k := 1;  //k bestimmt in der folgenden Sequenz, wann ein Spielstein überprüft wird, da nicht auf allen Feldern (nicht auf den weisen) ein Spielstein generiert wurde (Siehe Zeile X)
+      k := 1;  //k bestimmt in der folgenden Sequenz, wann ein Spielstein überprüft wird, da nicht auf allen Feldern (nicht auf den weisen) ein Spielstein generiert wurde.
       l:=12;
       m:=12;
       for i := 1 to 8 do
@@ -1036,13 +1531,12 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
     else //Wenn illegaler Zug
      begin
       ShowMessage('Illegaler Zug');
-      AZA:=1;  //Korrektur Zustandsvariable, Fehlerprevention
-      ImP.Left:=-100;  //Umrandungen werden "entfernt".
-      ImP2.Left:=-100;  //Siehe oben
+      ImP2.Left:=-100;  //Umrandung wird "entfernt".
      end;
    end;
 
-  if Schlag = 0 then
+  //Überürüfung: Kann erneut geschlagen werden.
+  if Schlag = 0 then  //Wenn nie geschlagen wurde, ändere einfach wer am Zug ist.
    begin
     if WaZ = 1 then
      begin
@@ -1052,7 +1546,6 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
      begin
       WaZLabel.Caption:=('Gelb ist am Zug');
      end;
-
    end
   else
    begin
@@ -1063,19 +1556,19 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
       if DZ = -1 then
        begin
         //Roter Stein
-        if (PosYZiel <> 1) and (PosYZiel <> 2) then
+        if (PosYZiel <> 1) and (PosYZiel <> 2) then  //Nicht überprüfen wenn Stein in den oberen zwei Zeilen ist.
          begin
-          if (PosXZiel <> 1) and (PosXZiel <> 2) then
+          if (PosXZiel <> 1) and (PosXZiel <> 2) then  //S.o.
            begin
             //Links
             if ImSN[(PosYZiel - 2),(PosXZiel - 2)].Visible = true then
              begin
               if (ImSG[(PosYZiel - 1),(PosXZiel - 1)].Visible = true) or (ImSGD[(PosYZiel - 1),(PosXZiel - 1)].Visible = true) then
                begin
-                ShowMessage('CouldCaptureLeftUp');
+                //Kann nach oben links schlagen
                 k:=2;
-                WaZ:=WaZ*-1;
-                ImP2.Left:=-500;
+                WaZ:=WaZ*-1;  //Selbe Person ist dran.
+                ImP2.Left:=-500;  //Umrandungen weg.
                 ImP.Left:=-500;
                end;
              end;
@@ -1087,7 +1580,7 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
              begin
               if (ImSG[(PosYZiel - 1),(PosXZiel + 1)].Visible = true) or (ImSGD[(PosYZiel - 1),(PosXZiel + 1)].Visible = true)then
                begin
-                ShowMessage('CouldCaptureRightUP');
+                //Kann nach oben rechts schlagen
                 k:=2;
                 WaZ:=WaZ*-1;
                 ImP2.Left:=-500;
@@ -1099,6 +1592,7 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
        end
       else
        begin
+        //Notiz: Der folgende Code ist sehr viel Kopieren-Einfügen. Es geht weiter bei Zeile 1766.
         //Rote Dame
         if (PosYZiel <> 1) and (PosYZiel <> 2) then
          begin
@@ -1109,7 +1603,6 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
              begin
               if (ImSG[(PosYZiel - 1),(PosXZiel - 1)].Visible = true) or (ImSGD[(PosYZiel - 1),(PosXZiel - 1)].Visible = true) then
                begin
-                ShowMessage('CouldCaptureLeftUp');
                 k:=2;
                 WaZ:=WaZ*-1;
                 ImP2.Left:=-500;
@@ -1124,7 +1617,6 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
              begin
               if (ImSG[(PosYZiel - 1),(PosXZiel + 1)].Visible = true) or (ImSGD[(PosYZiel - 1),(PosXZiel + 1)].Visible = true)then
                begin
-                ShowMessage('CouldCaptureRightUP');
                 k:=2;
                 WaZ:=WaZ*-1;
                 ImP2.Left:=-500;
@@ -1142,7 +1634,6 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
              begin
               if (ImSG[(PosYZiel + 1),(PosXZiel - 1)].Visible = true) or (ImSGD[(PosYZiel + 1),(PosXZiel - 1)].Visible = true) then
                begin
-                ShowMessage('CouldCaptureLeftdown');
                 k:=2;
                 WaZ:=WaZ*-1;
                 ImP2.Left:=-500;
@@ -1157,7 +1648,6 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
              begin
               if (ImSG[(PosYZiel + 1),(PosXZiel + 1)].Visible = true) or (ImSGD[(PosYZiel + 1),(PosXZiel + 1)].Visible = true)then
                begin
-                ShowMessage('CouldCaptureRightdown');
                 k:=2;
                 WaZ:=WaZ*-1;
                 ImP2.Left:=-500;
@@ -1182,7 +1672,6 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
              begin
               if (ImSR[(PosYZiel + 1),(PosXZiel - 1)].Visible = true) or (ImSRD[(PosYZiel + 1),(PosXZiel - 1)].Visible = true) then
                begin
-                ShowMessage('CouldCaptureLeftdown');
                 k:=2;
                 WaZ:=WaZ*-1;
                 ImP2.Left:=-500;
@@ -1197,7 +1686,6 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
              begin
               if (ImSR[(PosYZiel + 1),(PosXZiel + 1)].Visible = true) or (ImSRD[(PosYZiel + 1),(PosXZiel + 1)].Visible = true)then
                begin
-                ShowMessage('CouldCaptureRightdown');
                 k:=2;
                 WaZ:=WaZ*-1;
                 ImP2.Left:=-500;
@@ -1219,7 +1707,6 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
              begin
               if (ImSR[(PosYZiel - 1),(PosXZiel - 1)].Visible = true) or (ImSRD[(PosYZiel - 1),(PosXZiel - 1)].Visible = true) then
                begin
-                ShowMessage('CouldCaptureLeftUp');
                 k:=2;
                 WaZ:=WaZ*-1;
                 ImP2.Left:=-500;
@@ -1234,7 +1721,6 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
              begin
               if (ImSR[(PosYZiel - 1),(PosXZiel + 1)].Visible = true) or (ImSRD[(PosYZiel - 1),(PosXZiel + 1)].Visible = true)then
                begin
-                ShowMessage('CouldCaptureRightUP');
                 k:=2;
                 WaZ:=WaZ*-1;
                 ImP2.Left:=-500;
@@ -1252,7 +1738,6 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
              begin
               if (ImSR[(PosYZiel + 1),(PosXZiel - 1)].Visible = true) or (ImSRD[(PosYZiel + 1),(PosXZiel - 1)].Visible = true) then
                begin
-                ShowMessage('CouldCaptureLeftdown');
                 k:=2;
                 WaZ:=WaZ*-1;
                 ImP2.Left:=-500;
@@ -1267,7 +1752,6 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
              begin
               if (ImSR[(PosYZiel + 1),(PosXZiel + 1)].Visible = true) or (ImSRD[(PosYZiel + 1),(PosXZiel + 1)].Visible = true)then
                begin
-                ShowMessage('CouldCaptureRightdown');
                 k:=2;
                 WaZ:=WaZ*-1;
                 ImP2.Left:=-500;
@@ -1279,9 +1763,10 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
        end;
      end;
 
-    if k = 1 then
+    //Auswertung
+    if k = 1 then  //Keine Möglichkeit zum Ketten-Schlag gefunden
      begin
-      if WaZ = 1 then
+      if WaZ = 1 then  //Korrektur Beschriftung.
        begin
         WaZLabel.Caption:=('Rot ist am Zug');
        end
@@ -1293,38 +1778,39 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
     else
      begin
       //Bei kettenschlagen
-      ShowMessage('KETTE');
+      ShowMessage('Du kannst (und musst) erneut schlagen. Startposition wurde bereits gesetzt.');
+      KettenSchlag:=1;
       AzA:=-1;
-      PosXStart:=PosXZiel;
-      PosYStart:=PosYZiel;
+      PosXStart:=PosXZiel;  //Setze neue Start auf aktuelle Ziel Position, d.h. auf die Position des Steines, der nun gezogen wird.
+      PosYStart:=PosYZiel;  //S.o.
 
-      //ImP Position???
+      //ImP Position setzen
       ImP.Left:=500;
       for i := 1 to PosXStart do
        begin
         ImP.Left:=ImP.Left + 50;
        end;
+
       ImP.Top:=50;
       for i := 1 to PosYStart do
        begin
         ImP.Top:=ImP.Top + 50;
        end;
+
      end;
    end;
-
-
-
  end;
 
 
 
-{}{}procedure TForm1.Zurücksetzen(Sender: TObject);  //Zurücksetzen des Feldes. genutzt entweder manuell durch das drücken eines Knopfes, (oder ggf. in der Vollversion automatisch nach einem Sieg)
+procedure TForm1.Zurücksetzen(Sender: TObject);  //Zurücksetzen des Feldes. genutzt entweder manuell durch das drücken eines Knopfes, (oder utomatisch nach einem Sieg)
  begin
   ImP.Left:=-100;  //Umrandungen werden "entfernt".
   ImP2.Left:=-100;  //Siehe oben
   WaZLabel.Caption:=('Rot ist am Zug');
-  WaZ:=1;
-{}{}  k := 1;  //k bestimmt in der folgenden Sequenz, wann ein Spielstein "entfernt" wird, da nicht auf allen Feldern (nicht auf den weisen) ein Spielstein generiert wurde (Siehe Zeile X)
+  WaZ:=1;  //Rot beginnt wieder.
+  KettenSchlag:=0;  //Fehlervorbeugung.
+  k := 1;  //k bestimmt in der folgenden Sequenz, wann ein Spielstein "entfernt" wird, da nicht auf allen Feldern (nicht auf den weisen) ein Spielstein generiert wurde.
   for i := 1 to 8 do
    begin
     for j := 1 to 8 do
@@ -1341,7 +1827,8 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
           ImSR[i,j].BringToFront;
          end;
 
-{}{}        ImSG[i,j].Visible:=false;  //Siehe oben (Zeile X)
+        //Nochmal für gelb
+        ImSG[i,j].Visible:=false;
         ImSG[i,j].Enabled:=false;
         ImSG[i,j].SendToBack;
         if i <= 3 then
@@ -1359,7 +1846,7 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
         ImSGD[i,j].Enabled:=false;
         ImSGD[i,j].SendToBack;
 
-        //Zurücksetzen der Clickbaren leeren Felder
+        //Zurücksetzen der klickbaren leeren Felder
         ImSN[i,j].Visible:=false;
         ImSN[i,j].Enabled:=false;
         ImSN[i,j].SendToBack;
@@ -1382,19 +1869,12 @@ procedure TForm1.ClickHandlerElse(Sender: TObject);  //Wird im zweiten Schritt e
     k:=k*-1;  //Siehe oben
    end;
 
-
   AzA:=1;  //Der erste Zug beginnt mit dem auswählen eines Steines
-  WaZ:=1;  //Rot ist am Anfang am Zug
-
-
   ImP.BringToFront;  //Damit die Pointer im Vordergrund sind.
   ImP2.BringToFront;  //Siehe oben
  end;
 
 
 
-
-
-
-
- end.  //Ende. (UwU)
+//Ende. (-:[>
+end.
